@@ -5,8 +5,102 @@ enum SortOrder {
 }
 
 struct ContentView: View {
-    @StateObject private var scanner = FileSystemScanner()
     @StateObject private var permissions = PermissionsManager()
+    @State private var selectedTab: Tab = .systemData
+    
+    enum Tab {
+        case systemData
+        case orphanedContainers
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            // Tab bar
+            HStack(spacing: 0) {
+                TabButton(
+                    title: "System Data",
+                    icon: "folder.fill",
+                    isSelected: selectedTab == .systemData
+                ) {
+                    selectedTab = .systemData
+                }
+                
+                TabButton(
+                    title: "App Containers",
+                    icon: "shippingbox.fill",
+                    isSelected: selectedTab == .orphanedContainers
+                ) {
+                    selectedTab = .orphanedContainers
+                }
+                
+                Spacer()
+            }
+            .padding(.horizontal)
+            .padding(.vertical, 8)
+            .background(Color(NSColor.windowBackgroundColor))
+            
+            Divider()
+            
+            // Permission banner — shown until Full Disk Access is granted
+            if !permissions.hasFullDiskAccess {
+                PermissionBannerView(permissions: permissions)
+                Divider()
+            }
+            
+            // Tab content
+            TabView(selection: $selectedTab) {
+                SystemDataView()
+                    .tag(Tab.systemData)
+                
+                OrphanedContainersView()
+                    .tag(Tab.orphanedContainers)
+            }
+            .tabViewStyle(.automatic)
+        }
+        .frame(minWidth: 800, minHeight: 600)
+        // Re-check permissions when the user returns from System Settings
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            permissions.checkPermissions()
+        }
+    }
+}
+
+// MARK: - Tab Button
+
+struct TabButton: View {
+    let title: String
+    let icon: String
+    let isSelected: Bool
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 6) {
+                Image(systemName: icon)
+                    .font(.system(size: 12))
+                Text(title)
+                    .font(.system(size: 13, weight: .medium))
+            }
+            .foregroundColor(isSelected ? .primary : .secondary)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(
+                isSelected ? Color.accentColor.opacity(0.12) : Color.clear,
+                in: RoundedRectangle(cornerRadius: 6)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 6)
+                    .stroke(isSelected ? Color.accentColor.opacity(0.3) : Color.clear, lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+// MARK: - System Data View
+
+struct SystemDataView: View {
+    @StateObject private var scanner = FileSystemScanner()
     @State private var sortOrder: SortOrder = .name
 
     private var sortedItems: [FileSystemItem] {
@@ -20,7 +114,7 @@ struct ContentView: View {
         VStack(spacing: 0) {
             // Header
             HStack {
-                Text("VoidKit - System Data Explorer")
+                Text("System Data Explorer")
                     .font(.title2)
                     .fontWeight(.semibold)
 
@@ -58,12 +152,6 @@ struct ContentView: View {
             .background(Color(NSColor.windowBackgroundColor))
 
             Divider()
-
-            // Permission banner — shown until Full Disk Access is granted
-            if !permissions.hasFullDiskAccess {
-                PermissionBannerView(permissions: permissions)
-                Divider()
-            }
 
             // Content area
             if scanner.rootItems.isEmpty && !scanner.isScanning {
@@ -115,13 +203,8 @@ struct ContentView: View {
                 }
             }
         }
-        .frame(minWidth: 800, minHeight: 600)
         .onAppear {
             scanner.scanSystemDataPaths()
-        }
-        // Re-check permissions when the user returns from System Settings
-        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
-            permissions.checkPermissions()
         }
     }
 }
