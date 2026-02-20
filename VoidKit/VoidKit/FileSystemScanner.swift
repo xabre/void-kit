@@ -127,7 +127,7 @@ class FileSystemScanner: ObservableObject {
         guard let enumerator = fileManager.enumerator(
             at: URL(fileURLWithPath: path),
             includingPropertiesForKeys: [.fileSizeKey, .isDirectoryKey],
-            options: [.skipsHiddenFiles]
+            options: []
         ) else {
             return 0
         }

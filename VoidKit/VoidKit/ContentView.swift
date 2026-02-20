@@ -140,9 +140,6 @@ struct FileSystemItemView: View {
                 RoundedRectangle(cornerRadius: 4)
                     .fill(Color.clear)
             )
-            .onHover { isHovering in
-                // Optional: Add hover effect
-            }
             
             // Children (if expanded)
             if item.isExpanded {
