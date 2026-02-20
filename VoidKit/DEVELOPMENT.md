@@ -14,23 +14,46 @@ VoidKit is a macOS application that helps users identify and understand their Sy
    - Uses SwiftUI's `@main` attribute
 
 2. **ContentView.swift**
-   - Main UI view
+   - Main UI view with tab navigation
+   - Manages tab switching between System Data and App Containers
+   - Includes SystemDataView for file system scanning
+   - Handles permissions banner display
+
+3. **SystemDataView** (in ContentView.swift)
+   - System Data tab view
    - Manages the FileSystemScanner instance
    - Renders the tree view hierarchy
    - Handles user interactions (expand/collapse, scan)
 
-3. **FileSystemScanner.swift**
+4. **OrphanedContainersView.swift**
+   - App Containers tab view
+   - Manages the AppContainerScanner instance
+   - Displays list of containers with status
+   - Provides filtering and sorting options
+
+5. **FileSystemScanner.swift**
    - Core logic for scanning file system
    - Manages async operations for size calculation
    - Maintains the tree of FileSystemItem objects
    - Handles directory enumeration
 
-4. **SystemDataPaths.swift**
+6. **AppContainerScanner.swift**
+   - Scans ~/Library/Containers directory
+   - Detects orphaned application containers
+   - Uses NSWorkspace to check if apps are installed
+   - Calculates sizes asynchronously
+
+7. **SystemDataPaths.swift**
    - Defines known System Data locations
    - Provides path expansion utilities
    - Centralized location for adding new paths
 
-5. **FileSystemItem.swift** (embedded in FileSystemScanner.swift)
+8. **PermissionsManager.swift**
+   - Manages Full Disk Access permissions
+   - Detects permission status
+   - Opens System Settings for permission grants
+
+9. **FileSystemItem.swift** (embedded in FileSystemScanner.swift)
    - Model representing a file or directory
    - Observable properties for reactive UI updates
    - Manages child items and expanded state
