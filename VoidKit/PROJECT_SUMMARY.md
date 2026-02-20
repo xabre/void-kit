@@ -69,11 +69,11 @@ The app scans 15+ known System Data locations:
 ```
 VoidKit/
 ├── VoidKitApp.swift          (14 lines)  - App entry point
-├── ContentView.swift         (161 lines) - Main UI and tree view
+├── ContentView.swift         (158 lines) - Main UI and tree view
 ├── FileSystemScanner.swift   (152 lines) - File system logic
 ├── SystemDataPaths.swift     (42 lines)  - Path definitions
 └── Assets & Configuration    
-    Total: 369 lines of Swift code
+    Total: 366 lines of Swift code
 ```
 
 ## Project Structure
@@ -203,6 +203,6 @@ VoidKit is a complete, functional macOS application ready for building and testi
 ---
 
 **Total Development Time**: Single session
-**Lines of Code**: 369 (Swift) + 300+ (Documentation)
+**Lines of Code**: 366 (Swift) + 300+ (Documentation)
 **Files Created**: 10+ source files, 3 documentation files
 **Status**: ✅ Ready for testing and use

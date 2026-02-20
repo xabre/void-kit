@@ -120,7 +120,7 @@ private func calculateSize(for item: FileSystemItem) {
 ### Size Calculation
 - Uses `FileManager.enumerator` for efficient traversal
 - Runs on utility QoS for background processing
-- Skips hidden files by default
+- Includes hidden files for comprehensive System Data scanning
 
 ### Memory Management
 - Uses `[weak self]` in closures to prevent retain cycles
