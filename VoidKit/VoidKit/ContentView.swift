@@ -136,10 +136,6 @@ struct FileSystemItemView: View {
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
             .contentShape(Rectangle())
-            .background(
-                RoundedRectangle(cornerRadius: 4)
-                    .fill(Color.clear)
-            )
             
             // Children (if expanded)
             if item.isExpanded {
