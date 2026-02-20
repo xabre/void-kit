@@ -83,8 +83,7 @@ VoidKit/
 ├── VoidKit.xcodeproj/       # Xcode project file
 └── VoidKit/                 # Source files
     ├── VoidKitApp.swift         # App entry point
-    ├── ContentView.swift        # Main UI view with tab navigation
-    ├── SystemDataView.swift     # System Data tab (in ContentView.swift)
+    ├── ContentView.swift        # Main UI with tab navigation and System Data view
     ├── OrphanedContainersView.swift  # Orphaned Containers tab
     ├── FileSystemScanner.swift  # File system scanning logic
     ├── AppContainerScanner.swift  # Container scanning and orphan detection

@@ -219,8 +219,6 @@ struct ContainerItemView: View {
     }
 }
 
-struct OrphanedContainersView_Previews: PreviewProvider {
-    static var previews: some View {
-        OrphanedContainersView()
-    }
+#Preview {
+    OrphanedContainersView()
 }
