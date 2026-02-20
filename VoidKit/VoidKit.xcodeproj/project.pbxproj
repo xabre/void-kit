@@ -12,16 +12,18 @@
 		A1000003000000000000001 /* FileSystemScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000003000000000000001 /* FileSystemScanner.swift */; };
 		A1000004000000000000001 /* SystemDataPaths.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000004000000000000001 /* SystemDataPaths.swift */; };
 		A1000005000000000000001 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A2000005000000000000001 /* Assets.xcassets */; };
+		A1000006000000000000001 /* PermissionsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000007000000000000001 /* PermissionsManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		A3000001000000000000001 /* VoidKit.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VoidKit.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A2000001000000000000001 /* VoidKitApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoidKitApp.swift; sourceTree = "<group>"; };
 		A2000002000000000000001 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		A2000003000000000000001 /* FileSystemScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileSystemScanner.swift; sourceTree = "<group>"; };
 		A2000004000000000000001 /* SystemDataPaths.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemDataPaths.swift; sourceTree = "<group>"; };
 		A2000005000000000000001 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A2000006000000000000001 /* VoidKit.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = VoidKit.entitlements; sourceTree = "<group>"; };
+		A2000007000000000000001 /* PermissionsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionsManager.swift; sourceTree = "<group>"; };
+		A3000001000000000000001 /* VoidKit.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VoidKit.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -52,6 +54,7 @@
 				A2000004000000000000001 /* SystemDataPaths.swift */,
 				A2000005000000000000001 /* Assets.xcassets */,
 				A2000006000000000000001 /* VoidKit.entitlements */,
+				A2000007000000000000001 /* PermissionsManager.swift */,
 			);
 			path = VoidKit;
 			sourceTree = "<group>";
@@ -137,6 +140,7 @@
 				A1000003000000000000001 /* FileSystemScanner.swift in Sources */,
 				A1000004000000000000001 /* SystemDataPaths.swift in Sources */,
 				A1000001000000000000001 /* VoidKitApp.swift in Sources */,
+				A1000006000000000000001 /* PermissionsManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -271,15 +275,17 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "";
+				DEVELOPMENT_TEAM = K48UDL297J;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.voidkit.VoidKit;
+				PRODUCT_BUNDLE_IDENTIFIER = com.secelead.voidkit;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -296,15 +302,17 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "";
+				DEVELOPMENT_TEAM = K48UDL297J;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.voidkit.VoidKit;
+				PRODUCT_BUNDLE_IDENTIFIER = com.secelead.voidkit;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;

@@ -1,41 +1,48 @@
 import Foundation
 
+struct SystemDataLocation {
+    let path: String
+    let requiresElevatedPermissions: Bool
+}
+
 struct SystemDataPaths {
-    static let knownSystemDataLocations: [String] = [
+    static let knownSystemDataLocations: [SystemDataLocation] = [
         // User-level caches and logs
-        "~/Library/Caches",
-        "~/Library/Logs",
-        
+        SystemDataLocation(path: "~/Library/Caches", requiresElevatedPermissions: false),
+        SystemDataLocation(path: "~/Library/Logs", requiresElevatedPermissions: false),
+
         // Application Support
-        "~/Library/Application Support",
-        
-        // Safari and browser data
-        "~/Library/Safari",
-        "~/Library/Cookies",
-        
-        // Mail and Messages
-        "~/Library/Mail",
-        "~/Library/Messages",
-        
+        SystemDataLocation(path: "~/Library/Application Support", requiresElevatedPermissions: false),
+
+        // Safari and browser data (requires Full Disk Access)
+        SystemDataLocation(path: "~/Library/Safari", requiresElevatedPermissions: true),
+        SystemDataLocation(path: "~/Library/Cookies", requiresElevatedPermissions: false),
+
+        // Mail and Messages (requires Full Disk Access)
+        SystemDataLocation(path: "~/Library/Mail", requiresElevatedPermissions: true),
+        SystemDataLocation(path: "~/Library/Messages", requiresElevatedPermissions: true),
+
         // Developer caches
-        "~/Library/Developer/Xcode/DerivedData",
-        "~/Library/Developer/CoreSimulator",
-        
-        // System caches (requires admin access)
-        "/Library/Caches",
-        "/System/Library/Caches",
-        
-        // System logs
-        "/private/var/log",
-        
-        // Temporary files
-        "/private/var/tmp",
-        "/private/var/folders",
-        
+        SystemDataLocation(path: "~/Library/Developer/Xcode/DerivedData", requiresElevatedPermissions: false),
+        SystemDataLocation(path: "~/Library/Developer/CoreSimulator", requiresElevatedPermissions: false),
+
+        // System caches (requires admin / Full Disk Access)
+        SystemDataLocation(path: "/Library/Caches", requiresElevatedPermissions: true),
+        SystemDataLocation(path: "/System/Library/Caches", requiresElevatedPermissions: true),
+
+        // System logs (requires admin / Full Disk Access)
+        SystemDataLocation(path: "/private/var/log", requiresElevatedPermissions: true),
+
+        // Temporary files (requires admin / Full Disk Access)
+        SystemDataLocation(path: "/private/var/tmp", requiresElevatedPermissions: true),
+        SystemDataLocation(path: "/private/var/folders", requiresElevatedPermissions: true),
+
         // Time Machine local snapshots
-        "/.MobileBackups.trash"
+        SystemDataLocation(path: "/.MobileBackups.trash", requiresElevatedPermissions: true),
+
+        SystemDataLocation(path: "~/.local/share", requiresElevatedPermissions: false),
     ]
-    
+
     static func expandPath(_ path: String) -> String {
         return NSString(string: path).expandingTildeInPath
     }
