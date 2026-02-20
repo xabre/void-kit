@@ -22,13 +22,19 @@ struct OrphanedContainersView: View {
         case .name:
             return containers.sorted { $0.name < $1.name }
         case .size:
-            return containers.sorted { $0.size > $1.size }
+            return containers.sorted {
+                let sizeA = scanner.containerSizes[$0.id] ?? 0
+                let sizeB = scanner.containerSizes[$1.id] ?? 0
+                return sizeA > sizeB
+            }
         case .status:
             return containers.sorted { a, b in
                 if a.isOrphaned != b.isOrphaned {
                     return a.isOrphaned  // Orphaned items first
                 }
-                return a.size > b.size  // Then by size
+                let sizeA = scanner.containerSizes[a.id] ?? 0
+                let sizeB = scanner.containerSizes[b.id] ?? 0
+                return sizeA > sizeB  // Then by size
             }
         }
     }
@@ -124,7 +130,11 @@ struct OrphanedContainersView: View {
                     ScrollView {
                         LazyVStack(alignment: .leading, spacing: 0) {
                             ForEach(filteredAndSortedContainers) { container in
-                                ContainerItemView(container: container)
+                                ContainerItemView(
+                                    container: container,
+                                    size: scanner.containerSizes[container.id] ?? 0,
+                                    isCalculating: scanner.calculatingContainers.contains(container.id)
+                                )
                             }
                         }
                         .padding(.vertical, 8)
@@ -156,6 +166,8 @@ struct OrphanedContainersView: View {
 
 struct ContainerItemView: View {
     let container: ContainerInfo
+    let size: Int64
+    let isCalculating: Bool
     
     var body: some View {
         HStack(spacing: 8) {
@@ -188,10 +200,10 @@ struct ContainerItemView: View {
             Spacer()
             
             // Size / status
-            if container.isCalculating {
+            if isCalculating {
                 ProgressView().scaleEffect(0.6)
-            } else if container.size > 0 {
-                Text(ByteCountFormatter.string(fromByteCount: container.size, countStyle: .file))
+            } else if size > 0 {
+                Text(ByteCountFormatter.string(fromByteCount: size, countStyle: .file))
                     .font(.system(size: 12, design: .monospaced))
                     .foregroundColor(.secondary)
             } else {

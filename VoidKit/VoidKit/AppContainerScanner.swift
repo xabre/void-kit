@@ -6,13 +6,13 @@ struct ContainerInfo: Identifiable {
     let name: String
     let path: String
     let bundleID: String
-    var size: Int64 = 0
-    var isOrphaned: Bool = false
-    var isCalculating: Bool = false
+    let isOrphaned: Bool
 }
 
 class AppContainerScanner: ObservableObject {
     @Published var containers: [ContainerInfo] = []
+    @Published var containerSizes: [UUID: Int64] = [:]
+    @Published var calculatingContainers: Set<UUID> = []
     @Published var isScanning: Bool = false
     @Published var totalSize: Int64 = 0
     @Published var orphanedCount: Int = 0
@@ -23,6 +23,8 @@ class AppContainerScanner: ObservableObject {
         guard !isScanning else { return }
         isScanning = true
         containers = []
+        containerSizes = [:]
+        calculatingContainers = []
         totalSize = 0
         orphanedCount = 0
         
@@ -63,7 +65,7 @@ class AppContainerScanner: ObservableObject {
                     // Check if the application is still installed
                     let isOrphaned = !self.isApplicationInstalled(bundleID: bundleID)
                     
-                    var container = ContainerInfo(
+                    let container = ContainerInfo(
                         name: name,
                         path: fullPath,
                         bundleID: bundleID,
@@ -87,16 +89,16 @@ class AppContainerScanner: ObservableObject {
             
             // Calculate sizes in background
             let group = DispatchGroup()
-            for index in containerInfos.indices {
+            for container in containerInfos {
                 group.enter()
-                self.calculateSize(for: index) {
+                self.calculateSize(for: container) {
                     group.leave()
                 }
             }
             
             group.notify(queue: .main) { [weak self] in
                 guard let self = self else { return }
-                self.totalSize = self.containers.reduce(0) { $0 + $1.size }
+                self.totalSize = self.containerSizes.values.reduce(0, +)
                 self.isScanning = false
             }
         }
@@ -115,28 +117,22 @@ class AppContainerScanner: ObservableObject {
         return false
     }
     
-    private func calculateSize(for index: Int, completion: @escaping () -> Void) {
+    private func calculateSize(for container: ContainerInfo, completion: @escaping () -> Void) {
         DispatchQueue.global(qos: .utility).async { [weak self] in
-            guard let self = self,
-                  index < self.containers.count else {
+            guard let self = self else {
                 completion()
                 return
             }
             
             DispatchQueue.main.async {
-                if index < self.containers.count {
-                    self.containers[index].isCalculating = true
-                }
+                self.calculatingContainers.insert(container.id)
             }
             
-            let path = self.containers[index].path
-            let size = self.calculateDirectorySize(atPath: path)
+            let size = self.calculateDirectorySize(atPath: container.path)
             
             DispatchQueue.main.async {
-                if index < self.containers.count {
-                    self.containers[index].size = size
-                    self.containers[index].isCalculating = false
-                }
+                self.containerSizes[container.id] = size
+                self.calculatingContainers.remove(container.id)
                 completion()
             }
         }
