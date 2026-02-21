@@ -111,7 +111,9 @@ class AppContainerScanner: ObservableObject {
     private func scanInstalledApplications() {
         installedAppBundleIDs.removeAll()
         
-        // Scan common application directories
+        // Scan common application directories to build a set of all installed app bundle IDs.
+        // This approach is more efficient than querying NSWorkspace for each container,
+        // and allows us to detect helper apps by checking bundle ID prefixes.
         let applicationURLs: [URL] = [
             URL(fileURLWithPath: "/Applications"),
             URL(fileURLWithPath: "/System/Applications"),
@@ -119,6 +121,11 @@ class AppContainerScanner: ObservableObject {
         ]
         
         for applicationURL in applicationURLs {
+            // Skip if directory doesn't exist
+            guard fileManager.fileExists(atPath: applicationURL.path) else {
+                continue
+            }
+            
             guard let enumerator = fileManager.enumerator(
                 at: applicationURL,
                 includingPropertiesForKeys: [.isApplicationKey],
@@ -134,7 +141,7 @@ class AppContainerScanner: ObservableObject {
                        let bundleID = bundle.bundleIdentifier {
                         installedAppBundleIDs.insert(bundleID)
                     }
-                    // Don't recurse into app bundles
+                    // Don't recurse into app bundles to improve performance
                     enumerator.skipDescendants()
                 }
             }
