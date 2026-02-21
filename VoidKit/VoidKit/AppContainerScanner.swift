@@ -158,7 +158,10 @@ class AppContainerScanner: ObservableObject {
         // Helper apps typically have bundle IDs like "com.example.app.helper"
         // where "com.example.app" is the main app's bundle ID
         for installedBundleID in installedAppBundleIDs {
-            if bundleID.hasPrefix(installedBundleID + ".") {
+            // Check if bundleID starts with installedBundleID followed by a dot
+            // and has additional components (not just a trailing dot)
+            if bundleID.hasPrefix(installedBundleID + ".") && 
+               bundleID.count > installedBundleID.count + 1 {
                 return true
             }
         }
