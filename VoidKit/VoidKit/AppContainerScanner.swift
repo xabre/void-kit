@@ -18,6 +18,7 @@ class AppContainerScanner: ObservableObject {
     @Published var orphanedCount: Int = 0
     
     private let fileManager = FileManager.default
+    private var installedAppBundleIDs: Set<String> = []
     
     func scanContainers() {
         guard !isScanning else { return }
@@ -30,6 +31,9 @@ class AppContainerScanner: ObservableObject {
         
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else { return }
+            
+            // First, scan for all installed applications
+            self.scanInstalledApplications()
             
             let containersPath = self.fileManager.homeDirectoryForCurrentUser
                 .appendingPathComponent("Library/Containers")
@@ -104,14 +108,52 @@ class AppContainerScanner: ObservableObject {
         }
     }
     
-    private func isApplicationInstalled(bundleID: String) -> Bool {
-        // Use NSWorkspace to find applications by bundle identifier
-        let workspace = NSWorkspace.shared
+    private func scanInstalledApplications() {
+        installedAppBundleIDs.removeAll()
         
-        // Try to get the URL for the application with this bundle ID
-        if let appURL = workspace.urlForApplication(withBundleIdentifier: bundleID) {
-            // Check if the application file actually exists at that location
-            return fileManager.fileExists(atPath: appURL.path)
+        // Scan common application directories
+        let applicationURLs: [URL] = [
+            URL(fileURLWithPath: "/Applications"),
+            URL(fileURLWithPath: "/System/Applications"),
+            fileManager.homeDirectoryForCurrentUser.appendingPathComponent("Applications")
+        ]
+        
+        for applicationURL in applicationURLs {
+            guard let enumerator = fileManager.enumerator(
+                at: applicationURL,
+                includingPropertiesForKeys: [.isApplicationKey],
+                options: [.skipsHiddenFiles]
+            ) else {
+                continue
+            }
+            
+            for case let fileURL as URL in enumerator {
+                // Check if it's an application bundle
+                if fileURL.pathExtension == "app" {
+                    if let bundle = Bundle(url: fileURL),
+                       let bundleID = bundle.bundleIdentifier {
+                        installedAppBundleIDs.insert(bundleID)
+                    }
+                    // Don't recurse into app bundles
+                    enumerator.skipDescendants()
+                }
+            }
+        }
+    }
+    
+    private func isApplicationInstalled(bundleID: String) -> Bool {
+        // Check for exact match
+        if installedAppBundleIDs.contains(bundleID) {
+            return true
+        }
+        
+        // Check if this container belongs to a helper/extension of an installed app
+        // Helper apps typically have bundle IDs like "com.example.app.helper"
+        // where "com.example.app" is the main app's bundle ID
+        for installedBundleID in installedAppBundleIDs {
+            if bundleID.hasPrefix(installedBundleID + ".") {
+                return true
+            }
         }
         
         return false
