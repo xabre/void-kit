@@ -79,20 +79,39 @@ struct ContainerInfo: Identifiable {
 
 ### Detection Logic
 
-1. **Scan Phase**
+1. **Application Scan Phase**
+   - Scan common application directories (/Applications, /System/Applications, ~/Applications)
+   - Build a set of all installed application bundle IDs
+   - Cache this list for efficient lookups during container verification
+
+2. **Container Scan Phase**
    - Enumerate all directories in ~/Library/Containers
    - Skip hidden files (starting with .)
    - Extract bundle ID from directory name
 
-2. **Verification Phase**
-   - Use `NSWorkspace.shared.urlForApplication(withBundleIdentifier:)`
-   - Check if returned URL exists on disk
-   - Mark as orphaned if app not found or file doesn't exist
+3. **Verification Phase**
+   - Check for exact bundle ID match in installed apps set
+   - Check for prefix match to detect helper apps and extensions
+     - Helper apps typically have bundle IDs like `com.example.app.helper`
+     - If container bundle ID starts with `<installed-app-bundle-id>.`, it's considered installed
+   - Mark as orphaned only if no exact or prefix match is found
 
-3. **Size Calculation Phase**
+4. **Size Calculation Phase**
    - Calculate sizes asynchronously on background queue
    - Use FileManager's enumerator for recursive size calculation
    - Update UI on main queue
+
+### Helper App Detection
+
+Many applications include helper processes, extensions, and services that have their own containers. These helpers have bundle IDs derived from the main application:
+
+**Examples:**
+- Main app: `com.apple.Safari`
+- Helper: `com.apple.Safari.SafariForWebKitDevelopment`
+- Extension: `com.apple.Safari.SandboxBroker`
+
+**Detection Strategy:**
+The scanner recognizes these relationships by checking if a container's bundle ID is a "child" of any installed app. A container with bundle ID `com.example.app.helper` will not be marked as orphaned if `com.example.app` is installed.
 
 ### User Interactions
 

@@ -20,6 +20,7 @@ VoidKit is a macOS application designed to help you understand what's taking up 
 - 📦 **Orphaned Containers Detection**: Identifies application containers that remain after apps are uninstalled
   - Scans ~/Library/Containers for app data
   - Detects which applications are no longer installed
+  - Smart helper app detection: recognizes app extensions and helpers (e.g., com.app.helper)
   - Displays orphaned containers with clear visual indicators
   - Shows size information for each container
 
