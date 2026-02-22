@@ -17,9 +17,18 @@ VoidKit is a macOS application designed to help you understand what's taking up 
   - Mail and Messages storage
   - System-level caches and logs
 
+- 📦 **Orphaned Containers Detection**: Identifies application containers that remain after apps are uninstalled
+  - Scans ~/Library/Containers for app data
+  - Detects which applications are no longer installed
+  - Smart helper app detection: recognizes app extensions and helpers (e.g., com.app.helper)
+  - Displays orphaned containers with clear visual indicators
+  - Shows size information for each container
+
 - 📊 **Tree View Display**: Hierarchical view of folders and files with expandable/collapsible navigation
 
 - 📏 **Size Calculation**: Real-time calculation and display of folder and file sizes in human-readable format
+
+- 🎯 **Tab Navigation**: Switch between System Data and App Containers views
 
 - ⚡ **Performance**: Asynchronous scanning and size calculation to keep the UI responsive
 
@@ -46,10 +55,15 @@ VoidKit is a macOS application designed to help you understand what's taking up 
 ## Usage
 
 1. Launch VoidKit
-2. Click the "Scan" button to start scanning System Data locations
-3. Browse through the tree view to explore folders
-4. Click the chevron icon next to folders to expand and see their contents
-5. Size information is displayed on the right side for each item
+2. The app has two main tabs:
+   - **System Data**: Explore system data locations
+   - **App Containers**: Find orphaned application containers
+3. Click the "Scan" button in either tab to start scanning
+4. Browse through results:
+   - In System Data: Click chevron icons to expand folders
+   - In App Containers: View which apps are installed (green) or orphaned (orange)
+5. Use the filter options to show only orphaned containers
+6. Size information is displayed for each item
 
 ## App Name Alternatives
 
@@ -70,9 +84,12 @@ VoidKit/
 ├── VoidKit.xcodeproj/       # Xcode project file
 └── VoidKit/                 # Source files
     ├── VoidKitApp.swift         # App entry point
-    ├── ContentView.swift        # Main UI view with tree display
+    ├── ContentView.swift        # Main UI with tab navigation and System Data view
+    ├── OrphanedContainersView.swift  # Orphaned Containers tab
     ├── FileSystemScanner.swift  # File system scanning logic
+    ├── AppContainerScanner.swift  # Container scanning and orphan detection
     ├── SystemDataPaths.swift    # Known system data locations
+    ├── PermissionsManager.swift # Full Disk Access management
     ├── Assets.xcassets/         # App icons and assets
     └── VoidKit.entitlements     # App permissions
 ```

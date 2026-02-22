@@ -5,8 +5,102 @@ enum SortOrder {
 }
 
 struct ContentView: View {
-    @StateObject private var scanner = FileSystemScanner()
     @StateObject private var permissions = PermissionsManager()
+    @State private var selectedTab: Tab = .systemData
+    
+    enum Tab {
+        case systemData
+        case orphanedContainers
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            // Tab bar
+            HStack(spacing: 0) {
+                TabButton(
+                    title: "System Data",
+                    icon: "folder.fill",
+                    isSelected: selectedTab == .systemData
+                ) {
+                    selectedTab = .systemData
+                }
+                
+                TabButton(
+                    title: "App Containers",
+                    icon: "shippingbox.fill",
+                    isSelected: selectedTab == .orphanedContainers
+                ) {
+                    selectedTab = .orphanedContainers
+                }
+
+                Spacer()
+            }
+            .padding(.horizontal)
+            .padding(.vertical, 8)
+            .background(Color(NSColor.windowBackgroundColor))
+            
+            Divider()
+            
+            // Permission banner — shown until Full Disk Access is granted
+            if !permissions.hasFullDiskAccess {
+                PermissionBannerView(permissions: permissions)
+                Divider()
+            }
+            
+            // Tab content
+            TabView(selection: $selectedTab) {
+                SystemDataView()
+                    .tag(Tab.systemData)
+                
+                OrphanedContainersView()
+                    .tag(Tab.orphanedContainers)
+            }
+            .tabViewStyle(.automatic)
+        }
+        .frame(minWidth: 800, minHeight: 600)
+        // Re-check permissions when the user returns from System Settings
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            permissions.checkPermissions()
+        }
+    }
+}
+
+// MARK: - Tab Button
+
+struct TabButton: View {
+    let title: String
+    let icon: String
+    let isSelected: Bool
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 6) {
+                Image(systemName: icon)
+                    .font(.system(size: 12))
+                Text(title)
+                    .font(.system(size: 13, weight: .medium))
+            }
+            .foregroundColor(isSelected ? .primary : .secondary)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(
+                isSelected ? Color.accentColor.opacity(0.12) : Color.clear,
+                in: RoundedRectangle(cornerRadius: 6)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 6)
+                    .stroke(isSelected ? Color.accentColor.opacity(0.3) : Color.clear, lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+// MARK: - System Data View
+
+struct SystemDataView: View {
+    @StateObject private var scanner = FileSystemScanner()
     @State private var sortOrder: SortOrder = .name
 
     private var sortedItems: [FileSystemItem] {
@@ -20,7 +114,7 @@ struct ContentView: View {
         VStack(spacing: 0) {
             // Header
             HStack {
-                Text("VoidKit - System Data Explorer")
+                Text("System Data Explorer")
                     .font(.title2)
                     .fontWeight(.semibold)
 
@@ -58,12 +152,6 @@ struct ContentView: View {
             .background(Color(NSColor.windowBackgroundColor))
 
             Divider()
-
-            // Permission banner — shown until Full Disk Access is granted
-            if !permissions.hasFullDiskAccess {
-                PermissionBannerView(permissions: permissions)
-                Divider()
-            }
 
             // Content area
             if scanner.rootItems.isEmpty && !scanner.isScanning {
@@ -115,13 +203,8 @@ struct ContentView: View {
                 }
             }
         }
-        .frame(minWidth: 800, minHeight: 600)
         .onAppear {
             scanner.scanSystemDataPaths()
-        }
-        // Re-check permissions when the user returns from System Settings
-        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
-            permissions.checkPermissions()
         }
     }
 }
@@ -171,6 +254,7 @@ struct FileSystemItemView: View {
     let level: Int
     let sortOrder: SortOrder
 
+    private var isRootItem: Bool { level == 0 }
     private var indentation: CGFloat { CGFloat(level) * 20 }
 
     private var sortedChildren: [FileSystemItem] {
@@ -192,6 +276,13 @@ struct FileSystemItemView: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 8) {
                 Color.clear.frame(width: indentation)
+
+                // Safety dot for root items
+                if isRootItem, let safety = item.safetyLevel {
+                    Circle()
+                        .fill(safetyColor(safety))
+                        .frame(width: 8, height: 8)
+                }
 
                 // Disclosure / lock indicator
                 if item.isAccessDenied {
@@ -226,11 +317,41 @@ struct FileSystemItemView: View {
                 }
                 .frame(width: 22, height: 18)
 
-                // Name
-                Text(item.name)
-                    .font(.system(size: 13))
-                    .foregroundColor(item.isAccessDenied ? .secondary : .primary)
-                    .lineLimit(1)
+                // Name + safety label + description
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack(spacing: 6) {
+                        Text(item.name)
+                            .font(.system(size: 13))
+                            .foregroundColor(item.isAccessDenied ? .secondary : .primary)
+                            .lineLimit(1)
+
+                        if isRootItem, let safety = item.safetyLevel {
+                            Text(safety.label)
+                                .font(.system(size: 10, weight: .medium))
+                                .foregroundColor(safetyColor(safety))
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(
+                                    Capsule()
+                                        .fill(safetyColor(safety).opacity(0.12))
+                                )
+                        }
+                    }
+
+                    if isRootItem, let displayPath = item.displayPath {
+                        Text(displayPath)
+                            .font(.system(size: 11, design: .monospaced))
+                            .foregroundColor(.secondary)
+                            .lineLimit(1)
+                    }
+
+                    if isRootItem, let desc = item.safetyDescription {
+                        Text(desc)
+                            .font(.system(size: 11))
+                            .foregroundColor(.secondary)
+                            .lineLimit(1)
+                    }
+                }
 
                 Spacer()
 
@@ -255,7 +376,25 @@ struct FileSystemItemView: View {
                     scanner.loadChildren(for: item)
                 }
             }
-            .help(item.path)
+            .help(isRootItem && item.safetyDescription != nil ? item.safetyDescription! : item.path)
+            .contextMenu {
+                Button {
+                    if item.isDirectory {
+                        NSWorkspace.shared.open(URL(fileURLWithPath: item.path))
+                    } else {
+                        NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: item.path)])
+                    }
+                } label: {
+                    Label(item.isDirectory ? "Open in Finder" : "Show in Finder", systemImage: "folder")
+                }
+
+                Button {
+                    NSPasteboard.general.clearContents()
+                    NSPasteboard.general.setString(item.path, forType: .string)
+                } label: {
+                    Label("Copy Path", systemImage: "doc.on.doc")
+                }
+            }
 
             if item.isExpanded && !item.isAccessDenied {
                 ForEach(sortedChildren) { child in
@@ -264,10 +403,16 @@ struct FileSystemItemView: View {
             }
         }
     }
+
+    private func safetyColor(_ level: SafetyLevel) -> Color {
+        switch level {
+        case .safe: return .green
+        case .caution: return .yellow
+        case .unsafe: return .red
+        }
+    }
 }
 
-struct ContentView_Previews: PreviewProvider {
-    static var previews: some View {
-        ContentView()
-    }
+#Preview {
+    ContentView()
 }
