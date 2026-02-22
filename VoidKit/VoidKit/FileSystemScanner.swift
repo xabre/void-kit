@@ -11,6 +11,9 @@ class FileSystemItem: Identifiable, ObservableObject {
     @Published var isExpanded: Bool = false
     @Published var isCalculating: Bool = false
     @Published var isAccessDenied: Bool = false
+    var safetyLevel: SafetyLevel?
+    var safetyDescription: String?
+    var displayPath: String?
 
     init(name: String, path: String, isDirectory: Bool, requiresElevatedPermissions: Bool = false) {
         self.name = name
@@ -56,6 +59,9 @@ class FileSystemScanner: ObservableObject {
                     isDirectory: true,
                     requiresElevatedPermissions: location.requiresElevatedPermissions
                 )
+                item.safetyLevel = location.safetyLevel
+                item.safetyDescription = location.description
+                item.displayPath = location.path
 
                 // Detect permission issues immediately — a path may exist yet be unreadable.
                 if !self.fileManager.isReadableFile(atPath: expandedPath) {

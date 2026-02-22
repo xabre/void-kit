@@ -32,7 +32,7 @@ struct ContentView: View {
                 ) {
                     selectedTab = .orphanedContainers
                 }
-                
+
                 Spacer()
             }
             .padding(.horizontal)
@@ -254,6 +254,7 @@ struct FileSystemItemView: View {
     let level: Int
     let sortOrder: SortOrder
 
+    private var isRootItem: Bool { level == 0 }
     private var indentation: CGFloat { CGFloat(level) * 20 }
 
     private var sortedChildren: [FileSystemItem] {
@@ -275,6 +276,13 @@ struct FileSystemItemView: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 8) {
                 Color.clear.frame(width: indentation)
+
+                // Safety dot for root items
+                if isRootItem, let safety = item.safetyLevel {
+                    Circle()
+                        .fill(safetyColor(safety))
+                        .frame(width: 8, height: 8)
+                }
 
                 // Disclosure / lock indicator
                 if item.isAccessDenied {
@@ -309,11 +317,41 @@ struct FileSystemItemView: View {
                 }
                 .frame(width: 22, height: 18)
 
-                // Name
-                Text(item.name)
-                    .font(.system(size: 13))
-                    .foregroundColor(item.isAccessDenied ? .secondary : .primary)
-                    .lineLimit(1)
+                // Name + safety label + description
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack(spacing: 6) {
+                        Text(item.name)
+                            .font(.system(size: 13))
+                            .foregroundColor(item.isAccessDenied ? .secondary : .primary)
+                            .lineLimit(1)
+
+                        if isRootItem, let safety = item.safetyLevel {
+                            Text(safety.label)
+                                .font(.system(size: 10, weight: .medium))
+                                .foregroundColor(safetyColor(safety))
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(
+                                    Capsule()
+                                        .fill(safetyColor(safety).opacity(0.12))
+                                )
+                        }
+                    }
+
+                    if isRootItem, let displayPath = item.displayPath {
+                        Text(displayPath)
+                            .font(.system(size: 11, design: .monospaced))
+                            .foregroundColor(.secondary)
+                            .lineLimit(1)
+                    }
+
+                    if isRootItem, let desc = item.safetyDescription {
+                        Text(desc)
+                            .font(.system(size: 11))
+                            .foregroundColor(.secondary)
+                            .lineLimit(1)
+                    }
+                }
 
                 Spacer()
 
@@ -338,13 +376,39 @@ struct FileSystemItemView: View {
                     scanner.loadChildren(for: item)
                 }
             }
-            .help(item.path)
+            .help(isRootItem && item.safetyDescription != nil ? item.safetyDescription! : item.path)
+            .contextMenu {
+                Button {
+                    if item.isDirectory {
+                        NSWorkspace.shared.open(URL(fileURLWithPath: item.path))
+                    } else {
+                        NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: item.path)])
+                    }
+                } label: {
+                    Label(item.isDirectory ? "Open in Finder" : "Show in Finder", systemImage: "folder")
+                }
+
+                Button {
+                    NSPasteboard.general.clearContents()
+                    NSPasteboard.general.setString(item.path, forType: .string)
+                } label: {
+                    Label("Copy Path", systemImage: "doc.on.doc")
+                }
+            }
 
             if item.isExpanded && !item.isAccessDenied {
                 ForEach(sortedChildren) { child in
                     FileSystemItemView(item: child, scanner: scanner, level: level + 1, sortOrder: sortOrder)
                 }
             }
+        }
+    }
+
+    private func safetyColor(_ level: SafetyLevel) -> Color {
+        switch level {
+        case .safe: return .green
+        case .caution: return .yellow
+        case .unsafe: return .red
         }
     }
 }

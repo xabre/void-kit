@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(/usr/bin/mdfind:*)",
+      "Bash(xcodebuild:*)"
+    ]
+  }
+}
