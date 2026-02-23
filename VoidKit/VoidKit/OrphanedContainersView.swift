@@ -6,6 +6,7 @@ enum ContainerSortOrder {
 
 struct OrphanedContainersView: View {
     @StateObject private var scanner = AppContainerScanner()
+    @EnvironmentObject var deletionManager: DeletionManager
     @State private var sortOrder: ContainerSortOrder = .status
     @State private var showOnlyOrphaned: Bool = false
     @State private var hideAppleApps: Bool = true
@@ -49,6 +50,16 @@ struct OrphanedContainersView: View {
         }
     }
 
+    private var orphanedContainers: [ContainerInfo] {
+        filteredAndSortedContainers.filter { $0.isOrphaned }
+    }
+
+    private var allOrphanedSelected: Bool {
+        let orphaned = orphanedContainers
+        guard !orphaned.isEmpty else { return false }
+        return orphaned.allSatisfy { deletionManager.isSelected($0.id) }
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             // Header
@@ -87,6 +98,27 @@ struct OrphanedContainersView: View {
                     }
                 }
 
+                if !orphanedContainers.isEmpty {
+                    Button(action: {
+                        if allOrphanedSelected {
+                            for container in orphanedContainers {
+                                deletionManager.remove(container.id)
+                            }
+                        } else {
+                            for container in orphanedContainers {
+                                if !deletionManager.isSelected(container.id) {
+                                    let size = scanner.containerSizes[container.id] ?? 0
+                                    deletionManager.toggle(container: container, size: size)
+                                }
+                            }
+                        }
+                    }) {
+                        Label(allOrphanedSelected ? "Deselect All" : "Select All Orphaned",
+                              systemImage: allOrphanedSelected ? "xmark.circle" : "checkmark.circle")
+                    }
+                    .buttonStyle(.bordered)
+                }
+
                 if scanner.isScanning {
                     ProgressView()
                         .scaleEffect(0.7)
@@ -106,6 +138,7 @@ struct OrphanedContainersView: View {
                     Text("Size").tag(ContainerSortOrder.size)
                     Text("Last Used").tag(ContainerSortOrder.lastUsed)
                 }
+                .labelsHidden()
                 .pickerStyle(.segmented)
                 .frame(width: 240)
                 .disabled(scanner.containers.isEmpty)
@@ -147,36 +180,48 @@ struct OrphanedContainersView: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
-                ZStack {
-                    ScrollView {
-                        LazyVStack(alignment: .leading, spacing: 0) {
-                            ForEach(filteredAndSortedContainers) { container in
-                                ContainerItemView(
-                                    container: container,
-                                    size: scanner.containerSizes[container.id] ?? 0,
-                                    isCalculating: scanner.calculatingContainers.contains(container.id)
-                                )
-                            }
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: 0) {
+                        ForEach(Array(filteredAndSortedContainers.enumerated()), id: \.element.id) { index, container in
+                            ContainerItemView(
+                                container: container,
+                                size: scanner.containerSizes[container.id] ?? 0,
+                                isCalculating: scanner.calculatingContainers.contains(container.id),
+                                isSelected: deletionManager.isSelected(container.id),
+                                index: index,
+                                onToggleSelection: container.isOrphaned ? {
+                                    deletionManager.toggle(
+                                        container: container,
+                                        size: scanner.containerSizes[container.id] ?? 0
+                                    )
+                                } : nil
+                            )
                         }
-                        .padding(.vertical, 8)
                     }
-
-                    if scanner.isScanning {
-                        VStack(spacing: 12) {
-                            ProgressView()
-                                .scaleEffect(1.2)
-                            Text("Scanning containers…")
-                                .font(.system(size: 13))
-                                .foregroundColor(.secondary)
-                        }
-                        .padding(24)
-                        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
-                        .shadow(radius: 8)
-                    }
+                    .padding(.vertical, 8)
                 }
             }
+
+            // Status bar
+            if deletionManager.itemCount > 0 {
+                Divider()
+                HStack(spacing: 8) {
+                    Image(systemName: "trash")
+                        .font(.system(size: 11))
+                        .foregroundColor(.red)
+                    Text("\(deletionManager.itemCount) item\(deletionManager.itemCount == 1 ? "" : "s") queued for deletion")
+                        .font(.system(size: 12))
+                        .foregroundColor(.secondary)
+                    Text(deletionManager.formattedTotalSize)
+                        .font(.system(size: 12, weight: .medium, design: .monospaced))
+                        .foregroundColor(.red)
+                    Spacer()
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .background(Color(NSColor.windowBackgroundColor))
+            }
         }
-        .frame(minWidth: 800, minHeight: 600)
         .onAppear {
             scanner.scanContainers()
         }
@@ -189,6 +234,10 @@ struct ContainerItemView: View {
     let container: ContainerInfo
     let size: Int64
     let isCalculating: Bool
+    var isSelected: Bool = false
+    var index: Int = 0
+    var onToggleSelection: (() -> Void)? = nil
+    @State private var isHovered = false
 
     private static let relativeDateFormatter: RelativeDateTimeFormatter = {
         let formatter = RelativeDateTimeFormatter()
@@ -198,11 +247,24 @@ struct ContainerItemView: View {
 
     var body: some View {
         HStack(spacing: 8) {
+            // Checkbox for orphaned containers
+            if let toggleAction = onToggleSelection {
+                Button(action: toggleAction) {
+                    Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                        .font(.system(size: 16))
+                        .foregroundColor(isSelected ? .red : .secondary)
+                }
+                .buttonStyle(.plain)
+                .padding(.leading, 12)
+            } else {
+                Color.clear.frame(width: 4)
+            }
+
             // Status indicator
             Circle()
                 .fill(container.isOrphaned ? Color.orange : Color.green)
                 .frame(width: 8, height: 8)
-                .padding(.leading, 12)
+                .padding(.leading, onToggleSelection == nil ? 12 : 0)
 
             // Icon
             Image(systemName: container.isOrphaned ? "shippingbox.fill" : "shippingbox")
@@ -259,11 +321,15 @@ struct ContainerItemView: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
+        .background(rowBackground(index: index, isHovered: isHovered))
+        .onHover { hovering in
+            isHovered = hovering
+        }
         .contentShape(Rectangle())
         .help(container.path)
         .contextMenu {
             Button {
-                NSWorkspace.shared.open(URL(fileURLWithPath: container.path))
+                NSWorkspace.shared.selectFile(nil, inFileViewerRootedAtPath: container.path)
             } label: {
                 Label("Open in Finder", systemImage: "folder")
             }
@@ -295,4 +361,5 @@ struct ContainerItemView: View {
 
 #Preview {
     OrphanedContainersView()
+        .environmentObject(DeletionManager())
 }

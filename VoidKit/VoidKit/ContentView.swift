@@ -6,11 +6,13 @@ enum SortOrder {
 
 struct ContentView: View {
     @StateObject private var permissions = PermissionsManager()
+    @EnvironmentObject var deletionManager: DeletionManager
     @State private var selectedTab: Tab = .systemData
-    
+
     enum Tab {
         case systemData
         case orphanedContainers
+        case reviewDelete
     }
 
     var body: some View {
@@ -24,7 +26,7 @@ struct ContentView: View {
                 ) {
                     selectedTab = .systemData
                 }
-                
+
                 TabButton(
                     title: "App Containers",
                     icon: "shippingbox.fill",
@@ -33,31 +35,42 @@ struct ContentView: View {
                     selectedTab = .orphanedContainers
                 }
 
+                TabButton(
+                    title: "Review & Delete",
+                    icon: "trash.fill",
+                    isSelected: selectedTab == .reviewDelete,
+                    badgeText: deletionManager.itemCount > 0 ? deletionManager.formattedTotalSize : nil,
+                    badgeColor: .red
+                ) {
+                    selectedTab = .reviewDelete
+                }
+
                 Spacer()
             }
             .padding(.horizontal)
             .padding(.vertical, 8)
             .background(Color(NSColor.windowBackgroundColor))
-            
+
             Divider()
-            
+
             // Permission banner — shown until Full Disk Access is granted
             if !permissions.hasFullDiskAccess {
                 PermissionBannerView(permissions: permissions)
                 Divider()
             }
-            
+
             // Tab content
-            TabView(selection: $selectedTab) {
+            switch selectedTab {
+            case .systemData:
                 SystemDataView()
-                    .tag(Tab.systemData)
-                
+            case .orphanedContainers:
                 OrphanedContainersView()
-                    .tag(Tab.orphanedContainers)
+            case .reviewDelete:
+                ReviewDeleteView()
             }
-            .tabViewStyle(.automatic)
         }
         .frame(minWidth: 800, minHeight: 600)
+        .preferredColorScheme(.dark)
         // Re-check permissions when the user returns from System Settings
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             permissions.checkPermissions()
@@ -71,8 +84,10 @@ struct TabButton: View {
     let title: String
     let icon: String
     let isSelected: Bool
+    var badgeText: String? = nil
+    var badgeColor: Color = .red
     let action: () -> Void
-    
+
     var body: some View {
         Button(action: action) {
             HStack(spacing: 6) {
@@ -80,6 +95,15 @@ struct TabButton: View {
                     .font(.system(size: 12))
                 Text(title)
                     .font(.system(size: 13, weight: .medium))
+
+                if let badge = badgeText {
+                    Text(badge)
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Capsule().fill(badgeColor))
+                }
             }
             .foregroundColor(isSelected ? .primary : .secondary)
             .padding(.horizontal, 12)
@@ -139,6 +163,7 @@ struct SystemDataView: View {
                     Text("Name").tag(SortOrder.name)
                     Text("Size").tag(SortOrder.size)
                 }
+                .labelsHidden()
                 .pickerStyle(.segmented)
                 .frame(width: 120)
                 .disabled(scanner.rootItems.isEmpty)
@@ -178,28 +203,13 @@ struct SystemDataView: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
-                ZStack {
-                    ScrollView {
-                        LazyVStack(alignment: .leading, spacing: 0) {
-                            ForEach(sortedItems) { item in
-                                FileSystemItemView(item: item, scanner: scanner, level: 0, sortOrder: sortOrder)
-                            }
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: 0) {
+                        ForEach(Array(sortedItems.enumerated()), id: \.element.id) { index, item in
+                            FileSystemItemView(item: item, scanner: scanner, level: 0, sortOrder: sortOrder, index: index)
                         }
-                        .padding(.vertical, 8)
                     }
-
-                    if scanner.isScanning {
-                        VStack(spacing: 12) {
-                            ProgressView()
-                                .scaleEffect(1.2)
-                            Text("Scanning…")
-                                .font(.system(size: 13))
-                                .foregroundColor(.secondary)
-                        }
-                        .padding(24)
-                        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
-                        .shadow(radius: 8)
-                    }
+                    .padding(.vertical, 8)
                 }
             }
         }
@@ -251,8 +261,11 @@ struct PermissionBannerView: View {
 struct FileSystemItemView: View {
     @ObservedObject var item: FileSystemItem
     @ObservedObject var scanner: FileSystemScanner
+    @EnvironmentObject var deletionManager: DeletionManager
     let level: Int
     let sortOrder: SortOrder
+    var index: Int = 0
+    @State private var isHovered = false
 
     private var isRootItem: Bool { level == 0 }
     private var indentation: CGFloat { CGFloat(level) * 20 }
@@ -276,6 +289,16 @@ struct FileSystemItemView: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 8) {
                 Color.clear.frame(width: indentation)
+
+                // Checkbox
+                if !item.isAccessDenied {
+                    Button(action: { deletionManager.toggleFileSystemItem(item) }) {
+                        Image(systemName: deletionManager.isSelected(item.id) ? "checkmark.circle.fill" : "circle")
+                            .font(.system(size: 14))
+                            .foregroundColor(deletionManager.isSelected(item.id) ? .red : .secondary)
+                    }
+                    .buttonStyle(.plain)
+                }
 
                 // Safety dot for root items
                 if isRootItem, let safety = item.safetyLevel {
@@ -366,6 +389,10 @@ struct FileSystemItemView: View {
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
+            .background(rowBackground(index: index, isHovered: isHovered))
+            .onHover { hovering in
+                isHovered = hovering
+            }
             .contentShape(Rectangle())
             .onTapGesture {
                 guard item.isDirectory, !item.isAccessDenied else { return }
@@ -397,8 +424,8 @@ struct FileSystemItemView: View {
             }
 
             if item.isExpanded && !item.isAccessDenied {
-                ForEach(sortedChildren) { child in
-                    FileSystemItemView(item: child, scanner: scanner, level: level + 1, sortOrder: sortOrder)
+                ForEach(Array(sortedChildren.enumerated()), id: \.element.id) { childIndex, child in
+                    FileSystemItemView(item: child, scanner: scanner, level: level + 1, sortOrder: sortOrder, index: childIndex)
                 }
             }
         }
@@ -413,6 +440,19 @@ struct FileSystemItemView: View {
     }
 }
 
+// MARK: - Row Background Helper
+
+func rowBackground(index: Int, isHovered: Bool) -> Color {
+    if isHovered {
+        return Color.white.opacity(0.06)
+    } else if index % 2 == 1 {
+        return Color(NSColor.separatorColor).opacity(0.08)
+    } else {
+        return Color.clear
+    }
+}
+
 #Preview {
     ContentView()
+        .environmentObject(DeletionManager())
 }

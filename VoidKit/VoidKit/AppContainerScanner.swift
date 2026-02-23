@@ -1,7 +1,7 @@
 import Foundation
 import AppKit
 
-struct ContainerInfo: Identifiable {
+struct ContainerInfo: Identifiable, Hashable {
     let id = UUID()
     let name: String
     let path: String
@@ -10,6 +10,14 @@ struct ContainerInfo: Identifiable {
     let appName: String?
     let appPath: String?
     let lastUsedDate: Date?
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
+
+    static func == (lhs: ContainerInfo, rhs: ContainerInfo) -> Bool {
+        lhs.id == rhs.id
+    }
 }
 
 class AppContainerScanner: ObservableObject {
@@ -210,14 +218,37 @@ class AppContainerScanner: ObservableObject {
     }
 
     private func resolveApplication(bundleID: String) -> (name: String, path: String)? {
-        // Check for exact match
+        // 1. Check for exact match in our scanned apps
         if let app = installedApps[bundleID] {
             return app
         }
 
-        // Check if this container belongs to a helper/extension of an installed app
-        // Helper apps typically have bundle IDs like "com.example.app.helper"
-        // where "com.example.app" is the main app's bundle ID
+        // 2. Ask Launch Services — the authoritative source for installed apps.
+        //    This catches apps that mdfind and directory walks may miss
+        //    (e.g. App Store apps, apps in non-standard locations).
+        if let result = resolveViaLaunchServices(bundleID: bundleID) {
+            return result
+        }
+
+        // 3. Try stripping known distribution suffixes.
+        //    Some apps use bundle IDs like "com.example.app.appstore" for the
+        //    Mac App Store variant while the container may use either form.
+        let knownSuffixes = [".appstore", ".macos", ".mac", ".mas"]
+        for suffix in knownSuffixes {
+            if bundleID.hasSuffix(suffix) {
+                let stripped = String(bundleID.dropLast(suffix.count))
+                if let app = installedApps[stripped] {
+                    return app
+                }
+                if let result = resolveViaLaunchServices(bundleID: stripped) {
+                    return result
+                }
+            }
+        }
+
+        // 4. Check if this container belongs to a helper/extension of an installed app.
+        //    Helper apps typically have bundle IDs like "com.example.app.helper"
+        //    where "com.example.app" is the main app's bundle ID.
         for (installedBundleID, app) in installedApps {
             if bundleID.hasPrefix(installedBundleID + ".") &&
                bundleID.count > installedBundleID.count + 1 {
@@ -226,6 +257,20 @@ class AppContainerScanner: ObservableObject {
         }
 
         return nil
+    }
+
+    private func resolveViaLaunchServices(bundleID: String) -> (name: String, path: String)? {
+        guard let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) else {
+            return nil
+        }
+        let bundle = Bundle(url: appURL)
+        let displayName = bundle?.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String
+            ?? bundle?.object(forInfoDictionaryKey: "CFBundleName") as? String
+            ?? appURL.deletingPathExtension().lastPathComponent
+        let result = (name: displayName, path: appURL.path)
+        // Cache it so prefix matching can also find helpers
+        installedApps[bundleID] = result
+        return result
     }
 
     private func calculateSize(for container: ContainerInfo, completion: @escaping () -> Void) {

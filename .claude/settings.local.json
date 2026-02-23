@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(/usr/bin/mdfind:*)",
-      "Bash(xcodebuild:*)"
+      "Bash(xcodebuild:*)",
+      "WebSearch",
+      "Bash(swift:*)"
     ]
   }
 }

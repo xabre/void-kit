@@ -15,6 +15,8 @@
 		A1000006000000000000001 /* PermissionsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000007000000000000001 /* PermissionsManager.swift */; };
 		A1000007000000000000001 /* AppContainerScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000008000000000000001 /* AppContainerScanner.swift */; };
 		A1000008000000000000001 /* OrphanedContainersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000009000000000000001 /* OrphanedContainersView.swift */; };
+		A1000009000000000000001 /* DeletionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000010000000000000001 /* DeletionManager.swift */; };
+		A1000010000000000000001 /* ReviewDeleteView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000011000000000000001 /* ReviewDeleteView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -27,6 +29,8 @@
 		A2000007000000000000001 /* PermissionsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionsManager.swift; sourceTree = "<group>"; };
 		A2000008000000000000001 /* AppContainerScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppContainerScanner.swift; sourceTree = "<group>"; };
 		A2000009000000000000001 /* OrphanedContainersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrphanedContainersView.swift; sourceTree = "<group>"; };
+		A2000010000000000000001 /* DeletionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeletionManager.swift; sourceTree = "<group>"; };
+		A2000011000000000000001 /* ReviewDeleteView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReviewDeleteView.swift; sourceTree = "<group>"; };
 		A3000001000000000000001 /* VoidKit.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VoidKit.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -61,6 +65,8 @@
 				A2000007000000000000001 /* PermissionsManager.swift */,
 				A2000008000000000000001 /* AppContainerScanner.swift */,
 				A2000009000000000000001 /* OrphanedContainersView.swift */,
+				A2000010000000000000001 /* DeletionManager.swift */,
+				A2000011000000000000001 /* ReviewDeleteView.swift */,
 			);
 			path = VoidKit;
 			sourceTree = "<group>";
@@ -149,6 +155,8 @@
 				A1000006000000000000001 /* PermissionsManager.swift in Sources */,
 				A1000007000000000000001 /* AppContainerScanner.swift in Sources */,
 				A1000008000000000000001 /* OrphanedContainersView.swift in Sources */,
+				A1000009000000000000001 /* DeletionManager.swift in Sources */,
+				A1000010000000000000001 /* ReviewDeleteView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -278,6 +286,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = VoidKit/VoidKit.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
@@ -286,6 +295,7 @@
 				DEVELOPMENT_TEAM = K48UDL297J;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Void Kit";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -305,6 +315,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = VoidKit/VoidKit.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
@@ -313,6 +324,7 @@
 				DEVELOPMENT_TEAM = K48UDL297J;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Void Kit";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (

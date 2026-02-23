@@ -41,8 +41,8 @@ struct SystemDataPaths {
         SystemDataLocation(
             path: "~/Library/Application Support",
             requiresElevatedPermissions: false,
-            safetyLevel: .unsafe,
-            description: "App settings, databases, and user data. Deletion may cause data loss."
+            safetyLevel: .caution,
+            description: "App settings, databases, and user data. Review individual items before deleting."
         ),
 
         // Safari and browser data (requires Full Disk Access)
@@ -136,6 +136,122 @@ struct SystemDataPaths {
             requiresElevatedPermissions: false,
             safetyLevel: .caution,
             description: "Data for CLI tools (Fish, VS Code Server). Check before deleting."
+        ),
+
+        // Virtual memory and sleep image
+        SystemDataLocation(
+            path: "/private/var/vm",
+            requiresElevatedPermissions: true,
+            safetyLevel: .unsafe,
+            description: "Swap files and sleep image (size = RAM). Managed by the kernel."
+        ),
+
+        // iOS/iPadOS device backups
+        SystemDataLocation(
+            path: "~/Library/Application Support/MobileSync/Backup",
+            requiresElevatedPermissions: false,
+            safetyLevel: .caution,
+            description: "iPhone/iPad local backups. Old backups for devices you no longer own can be deleted."
+        ),
+
+        // Group Containers (shared app data)
+        SystemDataLocation(
+            path: "~/Library/Group Containers",
+            requiresElevatedPermissions: false,
+            safetyLevel: .caution,
+            description: "Shared data between related apps (Office, Adobe, etc.). Orphaned data is safe to remove."
+        ),
+
+        // Spotlight index
+        SystemDataLocation(
+            path: "/.Spotlight-V100",
+            requiresElevatedPermissions: true,
+            safetyLevel: .safe,
+            description: "Spotlight search index. Deleting forces a rebuild; no data loss."
+        ),
+
+        // Xcode iOS DeviceSupport (debug symbols)
+        SystemDataLocation(
+            path: "~/Library/Developer/Xcode/iOS DeviceSupport",
+            requiresElevatedPermissions: false,
+            safetyLevel: .safe,
+            description: "Debug symbols for connected iOS devices. Xcode re-downloads when needed."
+        ),
+
+        // Xcode Archives
+        SystemDataLocation(
+            path: "~/Library/Developer/Xcode/Archives",
+            requiresElevatedPermissions: false,
+            safetyLevel: .caution,
+            description: "App build archives. Only delete if you don't need to re-submit old builds."
+        ),
+
+        // Homebrew (Apple Silicon)
+        SystemDataLocation(
+            path: "/opt/homebrew",
+            requiresElevatedPermissions: false,
+            safetyLevel: .caution,
+            description: "Homebrew packages and caches. Run 'brew cleanup' to remove old versions safely."
+        ),
+
+        // System databases
+        SystemDataLocation(
+            path: "/private/var/db",
+            requiresElevatedPermissions: true,
+            safetyLevel: .unsafe,
+            description: "System databases (Spotlight, APFS metadata, dyld cache). Do not delete."
+        ),
+
+        // Package manager caches
+        SystemDataLocation(
+            path: "~/.npm",
+            requiresElevatedPermissions: false,
+            safetyLevel: .safe,
+            description: "npm package cache. Re-downloaded on next install."
+        ),
+        SystemDataLocation(
+            path: "~/.gradle",
+            requiresElevatedPermissions: false,
+            safetyLevel: .safe,
+            description: "Gradle build cache. Re-downloaded on next build."
+        ),
+        SystemDataLocation(
+            path: "~/Library/Caches/CocoaPods",
+            requiresElevatedPermissions: false,
+            safetyLevel: .safe,
+            description: "CocoaPods spec and download cache. Re-downloaded on next pod install."
+        ),
+
+        // Docker Desktop data
+        SystemDataLocation(
+            path: "~/Library/Containers/com.docker.docker",
+            requiresElevatedPermissions: false,
+            safetyLevel: .caution,
+            description: "Docker Desktop disk image and data. Deleting destroys all containers and images."
+        ),
+
+        // Saved Application State
+        SystemDataLocation(
+            path: "~/Library/Saved Application State",
+            requiresElevatedPermissions: false,
+            safetyLevel: .safe,
+            description: "Window positions and state saved by apps. Recreated on next launch."
+        ),
+
+        // WebKit and browser data
+        SystemDataLocation(
+            path: "~/Library/WebKit",
+            requiresElevatedPermissions: false,
+            safetyLevel: .caution,
+            description: "WebKit browsing data and local storage. Deleting clears web app data."
+        ),
+
+        // Preferences
+        SystemDataLocation(
+            path: "~/Library/Preferences",
+            requiresElevatedPermissions: false,
+            safetyLevel: .caution,
+            description: "App preference files (.plist). Deleting resets apps to defaults."
         ),
     ]
 
