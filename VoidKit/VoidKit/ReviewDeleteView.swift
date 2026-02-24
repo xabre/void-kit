@@ -4,18 +4,30 @@ struct ReviewDeleteView: View {
     @EnvironmentObject var deletionManager: DeletionManager
     @State private var showDeleteConfirmation = false
     @State private var deletionCompleted = false
+    @State private var trashSize: Int64 = 0
+    @State private var isCalculatingTrash = false
 
     private var sortedItems: [DeletionItem] {
         Array(deletionManager.selectedItems.values).sorted { $0.name < $1.name }
+    }
+
+    private var formattedTrashSize: String? {
+        guard trashSize > 0 else { return nil }
+        return ByteCountFormatter.string(fromByteCount: trashSize, countStyle: .file)
     }
 
     var body: some View {
         VStack(spacing: 0) {
             // Header
             HStack {
-                Text("Review & Delete")
-                    .font(.title2)
-                    .fontWeight(.semibold)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Review & Delete")
+                        .font(.title2)
+                        .fontWeight(.semibold)
+                    Text("Review your selected items before moving them to the Trash.")
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary)
+                }
 
                 Spacer()
 
@@ -42,6 +54,26 @@ struct ReviewDeleteView: View {
                     .tint(.red)
                     .disabled(deletionManager.isDeleting)
                 }
+
+                Button(action: {
+                    NSWorkspace.shared.open(URL(fileURLWithPath: NSHomeDirectory() + "/.Trash"))
+                }) {
+                    HStack(spacing: 6) {
+                        Label("Open Trash", systemImage: "trash.circle")
+                        if let size = formattedTrashSize {
+                            Text(size)
+                                .font(.system(size: 10, weight: .semibold))
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(Capsule().fill(Color.red))
+                        } else if isCalculatingTrash {
+                            ProgressView()
+                                .scaleEffect(0.5)
+                        }
+                    }
+                }
+                .buttonStyle(.bordered)
             }
             .padding()
             .background(Color(NSColor.windowBackgroundColor))
@@ -59,7 +91,7 @@ struct ReviewDeleteView: View {
                         .font(.title3)
                         .foregroundColor(.secondary)
 
-                    Text("Select orphaned containers from the App Containers tab to review them here")
+                    Text("Select items from the System Data or App Containers tabs to review them here")
                         .font(.body)
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
@@ -119,10 +151,39 @@ struct ReviewDeleteView: View {
             Button("Move to Trash", role: .destructive) {
                 Task {
                     _ = await deletionManager.deleteSelected()
+                    calculateTrashSize()
                 }
             }
         } message: {
             Text("The selected items will be moved to the Trash. Disk space will only be freed after you empty the Trash.")
+        }
+        .onAppear {
+            calculateTrashSize()
+        }
+    }
+
+    private func calculateTrashSize() {
+        isCalculatingTrash = true
+        DispatchQueue.global(qos: .utility).async {
+            let trashPath = NSHomeDirectory() + "/.Trash"
+            var total: Int64 = 0
+            if let enumerator = FileManager.default.enumerator(
+                at: URL(fileURLWithPath: trashPath),
+                includingPropertiesForKeys: [.fileSizeKey, .isDirectoryKey],
+                options: [.skipsHiddenFiles]
+            ) {
+                for case let fileURL as URL in enumerator {
+                    if let values = try? fileURL.resourceValues(forKeys: [.fileSizeKey, .isDirectoryKey]),
+                       let isDir = values.isDirectory, !isDir,
+                       let size = values.fileSize {
+                        total += Int64(size)
+                    }
+                }
+            }
+            DispatchQueue.main.async {
+                trashSize = total
+                isCalculatingTrash = false
+            }
         }
     }
 }

@@ -63,90 +63,101 @@ struct OrphanedContainersView: View {
     var body: some View {
         VStack(spacing: 0) {
             // Header
-            HStack {
-                Text("Application Containers")
-                    .font(.title2)
-                    .fontWeight(.semibold)
+            VStack(spacing: 6) {
+                HStack {
+                    Text("Application Containers")
+                        .font(.title2)
+                        .fontWeight(.semibold)
 
-                Spacer()
+                    Spacer()
 
-                if !scanner.containers.isEmpty {
-                    VStack(alignment: .trailing, spacing: 1) {
-                        Text("Total")
-                            .font(.system(size: 10))
-                            .foregroundColor(.secondary)
-                        Text(ByteCountFormatter.string(fromByteCount: scanner.totalSize, countStyle: .file))
-                            .font(.system(size: 13, weight: .medium, design: .monospaced))
-                    }
-
-                    if scanner.orphanedCount > 0 {
+                    if !scanner.containers.isEmpty {
                         VStack(alignment: .trailing, spacing: 1) {
-                            Text("Orphaned")
+                            Text("Total")
                                 .font(.system(size: 10))
+                                .foregroundColor(.secondary)
+                            Text(ByteCountFormatter.string(fromByteCount: scanner.totalSize, countStyle: .file))
+                                .font(.system(size: 13, weight: .medium, design: .monospaced))
+                        }
+
+                        if scanner.orphanedCount > 0 {
+                            VStack(alignment: .trailing, spacing: 1) {
+                                Text("Orphaned")
+                                    .font(.system(size: 10))
+                                    .foregroundColor(.orange)
+                                HStack(spacing: 4) {
+                                    Text("\(scanner.orphanedCount)")
+                                        .font(.system(size: 13, weight: .medium, design: .monospaced))
+                                    if scanner.orphanedTotalSize > 0 {
+                                        Text("(\(ByteCountFormatter.string(fromByteCount: scanner.orphanedTotalSize, countStyle: .file)))")
+                                            .font(.system(size: 11, design: .monospaced))
+                                    }
+                                }
                                 .foregroundColor(.orange)
-                            HStack(spacing: 4) {
-                                Text("\(scanner.orphanedCount)")
-                                    .font(.system(size: 13, weight: .medium, design: .monospaced))
-                                if scanner.orphanedTotalSize > 0 {
-                                    Text("(\(ByteCountFormatter.string(fromByteCount: scanner.orphanedTotalSize, countStyle: .file)))")
-                                        .font(.system(size: 11, design: .monospaced))
+                            }
+                            .padding(.leading, 12)
+                        }
+                    }
+
+                    if scanner.isScanning {
+                        ProgressView()
+                            .scaleEffect(0.7)
+                    }
+
+                    Button(action: { scanner.scanContainers() }) {
+                        Label("Scan", systemImage: "arrow.clockwise")
+                    }
+                    .disabled(scanner.isScanning)
+                }
+
+                HStack(spacing: 12) {
+                    Text("Find orphaned containers left behind by uninstalled apps. Select orphaned items to queue for deletion.")
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary)
+                        .lineLimit(1)
+
+                    Spacer()
+
+                    if !orphanedContainers.isEmpty {
+                        Button(action: {
+                            if allOrphanedSelected {
+                                for container in orphanedContainers {
+                                    deletionManager.remove(container.id)
+                                }
+                            } else {
+                                for container in orphanedContainers {
+                                    if !deletionManager.isSelected(container.id) {
+                                        let size = scanner.containerSizes[container.id] ?? 0
+                                        deletionManager.toggle(container: container, size: size)
+                                    }
                                 }
                             }
-                            .foregroundColor(.orange)
+                        }) {
+                            Label(allOrphanedSelected ? "Deselect All" : "Select All Orphaned",
+                                  systemImage: allOrphanedSelected ? "xmark.circle" : "checkmark.circle")
                         }
-                        .padding(.leading, 12)
+                        .buttonStyle(.bordered)
                     }
-                }
 
-                if !orphanedContainers.isEmpty {
-                    Button(action: {
-                        if allOrphanedSelected {
-                            for container in orphanedContainers {
-                                deletionManager.remove(container.id)
-                            }
-                        } else {
-                            for container in orphanedContainers {
-                                if !deletionManager.isSelected(container.id) {
-                                    let size = scanner.containerSizes[container.id] ?? 0
-                                    deletionManager.toggle(container: container, size: size)
-                                }
-                            }
-                        }
-                    }) {
-                        Label(allOrphanedSelected ? "Deselect All" : "Select All Orphaned",
-                              systemImage: allOrphanedSelected ? "xmark.circle" : "checkmark.circle")
+                    Toggle("Hide Apple", isOn: $hideAppleApps)
+                        .toggleStyle(.checkbox)
+                        .disabled(scanner.containers.isEmpty)
+
+                    Toggle("Orphaned Only", isOn: $showOnlyOrphaned)
+                        .toggleStyle(.checkbox)
+                        .disabled(scanner.containers.isEmpty)
+
+                    Picker("Sort by", selection: $sortOrder) {
+                        Text("Status").tag(ContainerSortOrder.status)
+                        Text("Name").tag(ContainerSortOrder.name)
+                        Text("Size").tag(ContainerSortOrder.size)
+                        Text("Last Used").tag(ContainerSortOrder.lastUsed)
                     }
-                    .buttonStyle(.bordered)
-                }
-
-                if scanner.isScanning {
-                    ProgressView()
-                        .scaleEffect(0.7)
-                }
-
-                Toggle("Hide Apple", isOn: $hideAppleApps)
-                    .toggleStyle(.checkbox)
+                    .labelsHidden()
+                    .pickerStyle(.segmented)
+                    .frame(width: 240)
                     .disabled(scanner.containers.isEmpty)
-
-                Toggle("Orphaned Only", isOn: $showOnlyOrphaned)
-                    .toggleStyle(.checkbox)
-                    .disabled(scanner.containers.isEmpty)
-
-                Picker("Sort by", selection: $sortOrder) {
-                    Text("Status").tag(ContainerSortOrder.status)
-                    Text("Name").tag(ContainerSortOrder.name)
-                    Text("Size").tag(ContainerSortOrder.size)
-                    Text("Last Used").tag(ContainerSortOrder.lastUsed)
                 }
-                .labelsHidden()
-                .pickerStyle(.segmented)
-                .frame(width: 240)
-                .disabled(scanner.containers.isEmpty)
-
-                Button(action: { scanner.scanContainers() }) {
-                    Label("Scan", systemImage: "arrow.clockwise")
-                }
-                .disabled(scanner.isScanning)
             }
             .padding()
             .background(Color(NSColor.windowBackgroundColor))

@@ -138,9 +138,14 @@ struct SystemDataView: View {
         VStack(spacing: 0) {
             // Header
             HStack {
-                Text("System Data Explorer")
-                    .font(.title2)
-                    .fontWeight(.semibold)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("System Data Explorer")
+                        .font(.title2)
+                        .fontWeight(.semibold)
+                    Text("Browse system folders, caches, and logs. Select items to queue for deletion.")
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary)
+                }
 
                 Spacer()
 
