@@ -62,8 +62,24 @@ jobs:
 
           echo "KEYCHAIN_PATH=$KEYCHAIN_PATH" >> $GITHUB_ENV
 
+      - name: Extract version from tag
+        id: version
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+            echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+            echo "Detected version from tag: $VERSION"
+          else
+            echo "No version tag detected, using project default"
+          fi
+
       - name: Build for Release
         run: |
+          VERSION_ARGS=""
+          if [ -n "${{ steps.version.outputs.VERSION }}" ]; then
+            VERSION_ARGS="MARKETING_VERSION=${{ steps.version.outputs.VERSION }} CURRENT_PROJECT_VERSION=${{ steps.version.outputs.VERSION }}"
+          fi
+
           xcodebuild \
             -project "$PROJECT" \
             -scheme "$SCHEME" \
@@ -74,6 +90,7 @@ jobs:
             CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY="Developer ID Application" \
             OTHER_CODE_SIGN_FLAGS="--keychain $KEYCHAIN_PATH" \
+            $VERSION_ARGS \
             build
 
       - name: Verify code signature

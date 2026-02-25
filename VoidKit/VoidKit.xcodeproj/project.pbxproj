@@ -18,6 +18,7 @@
 		A1000009000000000000001 /* DeletionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000010000000000000001 /* DeletionManager.swift */; };
 		A1000010000000000000001 /* ReviewDeleteView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000011000000000000001 /* ReviewDeleteView.swift */; };
 		A1000011000000000000001 /* FileUtilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000012000000000000001 /* FileUtilities.swift */; };
+		A1000012000000000000001 /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000013000000000000001 /* AboutView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -33,6 +34,7 @@
 		A2000010000000000000001 /* DeletionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeletionManager.swift; sourceTree = "<group>"; };
 		A2000011000000000000001 /* ReviewDeleteView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReviewDeleteView.swift; sourceTree = "<group>"; };
 		A2000012000000000000001 /* FileUtilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileUtilities.swift; sourceTree = "<group>"; };
+		A2000013000000000000001 /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
 		A3000001000000000000001 /* VoidKit.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VoidKit.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -70,6 +72,7 @@
 				A2000010000000000000001 /* DeletionManager.swift */,
 				A2000011000000000000001 /* ReviewDeleteView.swift */,
 				A2000012000000000000001 /* FileUtilities.swift */,
+				A2000013000000000000001 /* AboutView.swift */,
 			);
 			path = VoidKit;
 			sourceTree = "<group>";
@@ -110,7 +113,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1500;
-				LastUpgradeCheck = 1500;
+				LastUpgradeCheck = 1640;
 				TargetAttributes = {
 					A6000001000000000000001 = {
 						CreatedOnToolsVersion = 15.0;
@@ -161,6 +164,7 @@
 				A1000009000000000000001 /* DeletionManager.swift in Sources */,
 				A1000010000000000000001 /* ReviewDeleteView.swift in Sources */,
 				A1000011000000000000001 /* FileUtilities.swift in Sources */,
+				A1000012000000000000001 /* AboutView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -201,7 +205,9 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = K48UDL297J;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -264,7 +270,9 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = K48UDL297J;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -295,8 +303,8 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
-				DEVELOPMENT_TEAM = K48UDL297J;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Void Kit";
@@ -324,8 +332,8 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
-				DEVELOPMENT_TEAM = K48UDL297J;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Void Kit";
