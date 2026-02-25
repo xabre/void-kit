@@ -1,8 +1,9 @@
 import Foundation
 import AppKit
+import CryptoKit
 
 struct ContainerInfo: Identifiable, Hashable {
-    let id = UUID()
+    let id: UUID
     let name: String
     let path: String
     let bundleID: String
@@ -17,6 +18,20 @@ struct ContainerInfo: Identifiable, Hashable {
 
     static func == (lhs: ContainerInfo, rhs: ContainerInfo) -> Bool {
         lhs.id == rhs.id
+    }
+
+    /// Create a deterministic UUID from a path so the same container
+    /// produces the same ID across re-scans.
+    static func stableID(forPath path: String) -> UUID {
+        let hash = SHA256.hash(data: Data(path.utf8))
+        let bytes = Array(hash)
+        // Build a UUID from the first 16 bytes of the SHA-256 digest
+        return UUID(uuid: (
+            bytes[0], bytes[1], bytes[2], bytes[3],
+            bytes[4], bytes[5], bytes[6], bytes[7],
+            bytes[8], bytes[9], bytes[10], bytes[11],
+            bytes[12], bytes[13], bytes[14], bytes[15]
+        ))
     }
 }
 
@@ -88,6 +103,7 @@ class AppContainerScanner: ObservableObject {
                     ).contentModificationDate
 
                     let container = ContainerInfo(
+                        id: ContainerInfo.stableID(forPath: fullPath),
                         name: name,
                         path: fullPath,
                         bundleID: bundleID,
@@ -173,10 +189,7 @@ class AppContainerScanner: ObservableObject {
             let url = URL(fileURLWithPath: path)
             if let bundle = Bundle(url: url),
                let bundleID = bundle.bundleIdentifier {
-                let displayName = bundle.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String
-                    ?? bundle.object(forInfoDictionaryKey: "CFBundleName") as? String
-                    ?? url.deletingPathExtension().lastPathComponent
-                installedApps[bundleID] = (name: displayName, path: path)
+                installedApps[bundleID] = (name: bundle.displayName, path: path)
             }
         }
     }
@@ -206,10 +219,7 @@ class AppContainerScanner: ObservableObject {
                 if fileURL.pathExtension == "app" {
                     if let bundle = Bundle(url: fileURL),
                        let bundleID = bundle.bundleIdentifier {
-                        let displayName = bundle.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String
-                            ?? bundle.object(forInfoDictionaryKey: "CFBundleName") as? String
-                            ?? fileURL.deletingPathExtension().lastPathComponent
-                        installedApps[bundleID] = (name: displayName, path: fileURL.path)
+                        installedApps[bundleID] = (name: bundle.displayName, path: fileURL.path)
                     }
                     enumerator.skipDescendants()
                 }
@@ -263,9 +273,7 @@ class AppContainerScanner: ObservableObject {
         guard let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) else {
             return nil
         }
-        let bundle = Bundle(url: appURL)
-        let displayName = bundle?.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String
-            ?? bundle?.object(forInfoDictionaryKey: "CFBundleName") as? String
+        let displayName = Bundle(url: appURL)?.displayName
             ?? appURL.deletingPathExtension().lastPathComponent
         let result = (name: displayName, path: appURL.path)
         // Cache it so prefix matching can also find helpers
@@ -284,7 +292,7 @@ class AppContainerScanner: ObservableObject {
                 self.calculatingContainers.insert(container.id)
             }
 
-            let size = self.calculateDirectorySize(atPath: container.path)
+            let size = FileUtilities.calculateDirectorySize(atPath: container.path)
 
             DispatchQueue.main.async {
                 self.containerSizes[container.id] = size
@@ -294,29 +302,4 @@ class AppContainerScanner: ObservableObject {
         }
     }
 
-    private func calculateDirectorySize(atPath path: String) -> Int64 {
-        var totalSize: Int64 = 0
-
-        guard let enumerator = fileManager.enumerator(
-            at: URL(fileURLWithPath: path),
-            includingPropertiesForKeys: [.fileSizeKey, .isDirectoryKey],
-            options: []
-        ) else {
-            return 0
-        }
-
-        for case let fileURL as URL in enumerator {
-            do {
-                let values = try fileURL.resourceValues(forKeys: [.fileSizeKey, .isDirectoryKey])
-                if let isDirectory = values.isDirectory, !isDirectory,
-                   let fileSize = values.fileSize {
-                    totalSize += Int64(fileSize)
-                }
-            } catch {
-                continue
-            }
-        }
-
-        return totalSize
-    }
 }

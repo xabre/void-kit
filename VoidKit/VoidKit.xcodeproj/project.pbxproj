@@ -17,6 +17,7 @@
 		A1000008000000000000001 /* OrphanedContainersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000009000000000000001 /* OrphanedContainersView.swift */; };
 		A1000009000000000000001 /* DeletionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000010000000000000001 /* DeletionManager.swift */; };
 		A1000010000000000000001 /* ReviewDeleteView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000011000000000000001 /* ReviewDeleteView.swift */; };
+		A1000011000000000000001 /* FileUtilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000012000000000000001 /* FileUtilities.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -31,6 +32,7 @@
 		A2000009000000000000001 /* OrphanedContainersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrphanedContainersView.swift; sourceTree = "<group>"; };
 		A2000010000000000000001 /* DeletionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeletionManager.swift; sourceTree = "<group>"; };
 		A2000011000000000000001 /* ReviewDeleteView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReviewDeleteView.swift; sourceTree = "<group>"; };
+		A2000012000000000000001 /* FileUtilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileUtilities.swift; sourceTree = "<group>"; };
 		A3000001000000000000001 /* VoidKit.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VoidKit.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -67,6 +69,7 @@
 				A2000009000000000000001 /* OrphanedContainersView.swift */,
 				A2000010000000000000001 /* DeletionManager.swift */,
 				A2000011000000000000001 /* ReviewDeleteView.swift */,
+				A2000012000000000000001 /* FileUtilities.swift */,
 			);
 			path = VoidKit;
 			sourceTree = "<group>";
@@ -157,6 +160,7 @@
 				A1000008000000000000001 /* OrphanedContainersView.swift in Sources */,
 				A1000009000000000000001 /* DeletionManager.swift in Sources */,
 				A1000010000000000000001 /* ReviewDeleteView.swift in Sources */,
+				A1000011000000000000001 /* FileUtilities.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

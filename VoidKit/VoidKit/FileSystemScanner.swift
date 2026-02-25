@@ -60,7 +60,7 @@ class FileSystemScanner: ObservableObject {
                     requiresElevatedPermissions: location.requiresElevatedPermissions
                 )
                 item.safetyLevel = location.safetyLevel
-                item.safetyDescription = location.description
+                item.safetyDescription = location.summary
                 item.displayPath = location.path
 
                 // Detect permission issues immediately — a path may exist yet be unreadable.
@@ -96,7 +96,7 @@ class FileSystemScanner: ObservableObject {
     func loadChildren(for item: FileSystemItem) {
         guard item.isDirectory, item.children.isEmpty, !item.isAccessDenied else { return }
 
-        item.isCalculating = true
+        DispatchQueue.main.async { item.isCalculating = true }
 
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else { return }
@@ -151,7 +151,7 @@ class FileSystemScanner: ObservableObject {
 
     private func calculateSize(for item: FileSystemItem, completion: (() -> Void)? = nil) {
         DispatchQueue.global(qos: .utility).async {
-            let size = self.calculateDirectorySize(atPath: item.path)
+            let size = FileUtilities.calculateDirectorySize(atPath: item.path)
             DispatchQueue.main.async {
                 item.size = size
                 completion?()
@@ -159,29 +159,4 @@ class FileSystemScanner: ObservableObject {
         }
     }
 
-    private func calculateDirectorySize(atPath path: String) -> Int64 {
-        var totalSize: Int64 = 0
-
-        guard let enumerator = fileManager.enumerator(
-            at: URL(fileURLWithPath: path),
-            includingPropertiesForKeys: [.fileSizeKey, .isDirectoryKey],
-            options: []
-        ) else {
-            return 0
-        }
-
-        for case let fileURL as URL in enumerator {
-            do {
-                let values = try fileURL.resourceValues(forKeys: [.fileSizeKey, .isDirectoryKey])
-                if let isDirectory = values.isDirectory, !isDirectory,
-                   let fileSize = values.fileSize {
-                    totalSize += Int64(fileSize)
-                }
-            } catch {
-                continue
-            }
-        }
-
-        return totalSize
-    }
 }

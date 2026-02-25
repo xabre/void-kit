@@ -3,7 +3,7 @@ import SwiftUI
 struct ReviewDeleteView: View {
     @EnvironmentObject var deletionManager: DeletionManager
     @State private var showDeleteConfirmation = false
-    @State private var deletionCompleted = false
+    @State private var showErrorAlert = false
     @State private var trashSize: Int64 = 0
     @State private var isCalculatingTrash = false
 
@@ -157,6 +157,16 @@ struct ReviewDeleteView: View {
         } message: {
             Text("The selected items will be moved to the Trash. Disk space will only be freed after you empty the Trash.")
         }
+        .alert("Deletion Error", isPresented: $showErrorAlert) {
+            Button("OK", role: .cancel) {
+                deletionManager.lastError = nil
+            }
+        } message: {
+            Text(deletionManager.lastError ?? "")
+        }
+        .onChange(of: deletionManager.lastError) { error in
+            showErrorAlert = error != nil
+        }
         .onAppear {
             calculateTrashSize()
         }
@@ -169,13 +179,13 @@ struct ReviewDeleteView: View {
             var total: Int64 = 0
             if let enumerator = FileManager.default.enumerator(
                 at: URL(fileURLWithPath: trashPath),
-                includingPropertiesForKeys: [.fileSizeKey, .isDirectoryKey],
-                options: [.skipsHiddenFiles]
+                includingPropertiesForKeys: [.totalFileAllocatedSizeKey, .isDirectoryKey],
+                options: []
             ) {
                 for case let fileURL as URL in enumerator {
-                    if let values = try? fileURL.resourceValues(forKeys: [.fileSizeKey, .isDirectoryKey]),
+                    if let values = try? fileURL.resourceValues(forKeys: [.totalFileAllocatedSizeKey, .isDirectoryKey]),
                        let isDir = values.isDirectory, !isDir,
-                       let size = values.fileSize {
+                       let size = values.totalFileAllocatedSize {
                         total += Int64(size)
                     }
                 }
@@ -199,8 +209,8 @@ struct DeletionItemRow: View {
     var body: some View {
         HStack(spacing: 8) {
             // Icon
-            Image(systemName: "shippingbox.fill")
-                .foregroundColor(.orange)
+            Image(systemName: item.source == .systemData ? "folder.fill" : "shippingbox.fill")
+                .foregroundColor(item.source == .systemData ? .blue : .orange)
                 .font(.system(size: 14))
                 .frame(width: 22, height: 18)
                 .padding(.leading, 12)

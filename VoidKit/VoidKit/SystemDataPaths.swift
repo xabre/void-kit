@@ -18,7 +18,7 @@ struct SystemDataLocation {
     let path: String
     let requiresElevatedPermissions: Bool
     let safetyLevel: SafetyLevel
-    let description: String
+    let summary: String
 }
 
 struct SystemDataPaths {
@@ -28,13 +28,13 @@ struct SystemDataPaths {
             path: "~/Library/Caches",
             requiresElevatedPermissions: false,
             safetyLevel: .safe,
-            description: "Temporary files cached by apps. Apps recreate these as needed."
+            summary: "Temporary files cached by apps. Apps recreate these as needed."
         ),
         SystemDataLocation(
             path: "~/Library/Logs",
             requiresElevatedPermissions: false,
             safetyLevel: .safe,
-            description: "Diagnostic logs. Safe to remove; new logs created automatically."
+            summary: "Diagnostic logs. Safe to remove; new logs created automatically."
         ),
 
         // Application Support
@@ -42,7 +42,7 @@ struct SystemDataPaths {
             path: "~/Library/Application Support",
             requiresElevatedPermissions: false,
             safetyLevel: .caution,
-            description: "App settings, databases, and user data. Review individual items before deleting."
+            summary: "App settings, databases, and user data. Review individual items before deleting."
         ),
 
         // Safari and browser data (requires Full Disk Access)
@@ -50,13 +50,13 @@ struct SystemDataPaths {
             path: "~/Library/Safari",
             requiresElevatedPermissions: true,
             safetyLevel: .unsafe,
-            description: "Safari history, bookmarks, extensions. Deletion erases browsing data."
+            summary: "Safari history, bookmarks, extensions. Deletion erases browsing data."
         ),
         SystemDataLocation(
             path: "~/Library/Cookies",
             requiresElevatedPermissions: false,
             safetyLevel: .caution,
-            description: "Website cookies and sessions. Deleting signs you out of websites."
+            summary: "Website cookies and sessions. Deleting signs you out of websites."
         ),
 
         // Mail and Messages (requires Full Disk Access)
@@ -64,13 +64,13 @@ struct SystemDataPaths {
             path: "~/Library/Mail",
             requiresElevatedPermissions: true,
             safetyLevel: .unsafe,
-            description: "Local email messages. Deletion may cause permanent email loss."
+            summary: "Local email messages. Deletion may cause permanent email loss."
         ),
         SystemDataLocation(
             path: "~/Library/Messages",
             requiresElevatedPermissions: true,
             safetyLevel: .unsafe,
-            description: "iMessage/SMS history and attachments. Deletion is irreversible."
+            summary: "iMessage/SMS history and attachments. Deletion is irreversible."
         ),
 
         // Developer caches
@@ -78,13 +78,13 @@ struct SystemDataPaths {
             path: "~/Library/Developer/Xcode/DerivedData",
             requiresElevatedPermissions: false,
             safetyLevel: .safe,
-            description: "Xcode build artifacts. Deleting forces clean rebuild, no data loss."
+            summary: "Xcode build artifacts. Deleting forces clean rebuild, no data loss."
         ),
         SystemDataLocation(
             path: "~/Library/Developer/CoreSimulator",
             requiresElevatedPermissions: false,
             safetyLevel: .caution,
-            description: "Simulator devices and data. Removes simulator content but not Xcode."
+            summary: "Simulator devices and data. Removes simulator content but not Xcode."
         ),
 
         // System caches (requires admin / Full Disk Access)
@@ -92,13 +92,13 @@ struct SystemDataPaths {
             path: "/Library/Caches",
             requiresElevatedPermissions: true,
             safetyLevel: .safe,
-            description: "System-wide caches. System and apps regenerate these."
+            summary: "System-wide caches. System and apps regenerate these."
         ),
         SystemDataLocation(
             path: "/System/Library/Caches",
             requiresElevatedPermissions: true,
             safetyLevel: .caution,
-            description: "Core macOS caches. Generally safe but may need reboot."
+            summary: "Core macOS caches. Generally safe but may need reboot."
         ),
 
         // System logs (requires admin / Full Disk Access)
@@ -106,7 +106,7 @@ struct SystemDataPaths {
             path: "/private/var/log",
             requiresElevatedPermissions: true,
             safetyLevel: .safe,
-            description: "System diagnostic logs. System recreates log files automatically."
+            summary: "System diagnostic logs. System recreates log files automatically."
         ),
 
         // Temporary files (requires admin / Full Disk Access)
@@ -114,13 +114,13 @@ struct SystemDataPaths {
             path: "/private/var/tmp",
             requiresElevatedPermissions: true,
             safetyLevel: .safe,
-            description: "System temp files. Safe to remove; recreated as needed."
+            summary: "System temp files. Safe to remove; recreated as needed."
         ),
         SystemDataLocation(
             path: "/private/var/folders",
             requiresElevatedPermissions: true,
             safetyLevel: .caution,
-            description: "Per-user temp/cache dirs. Active apps could be disrupted."
+            summary: "Per-user temp/cache dirs. Active apps could be disrupted."
         ),
 
         // Time Machine local snapshots
@@ -128,14 +128,14 @@ struct SystemDataPaths {
             path: "/.MobileBackups.trash",
             requiresElevatedPermissions: true,
             safetyLevel: .safe,
-            description: "Deleted Time Machine snapshots. Safe to remove."
+            summary: "Deleted Time Machine snapshots. Safe to remove."
         ),
 
         SystemDataLocation(
             path: "~/.local/share",
             requiresElevatedPermissions: false,
             safetyLevel: .caution,
-            description: "Data for CLI tools (Fish, VS Code Server). Check before deleting."
+            summary: "Data for CLI tools (Fish, VS Code Server). Check before deleting."
         ),
 
         // Virtual memory and sleep image
@@ -143,7 +143,7 @@ struct SystemDataPaths {
             path: "/private/var/vm",
             requiresElevatedPermissions: true,
             safetyLevel: .unsafe,
-            description: "Swap files and sleep image (size = RAM). Managed by the kernel."
+            summary: "Swap files and sleep image (size = RAM). Managed by the kernel."
         ),
 
         // iOS/iPadOS device backups
@@ -151,7 +151,7 @@ struct SystemDataPaths {
             path: "~/Library/Application Support/MobileSync/Backup",
             requiresElevatedPermissions: false,
             safetyLevel: .caution,
-            description: "iPhone/iPad local backups. Old backups for devices you no longer own can be deleted."
+            summary: "iPhone/iPad local backups. Old backups for devices you no longer own can be deleted."
         ),
 
         // Group Containers (shared app data)
@@ -159,7 +159,7 @@ struct SystemDataPaths {
             path: "~/Library/Group Containers",
             requiresElevatedPermissions: false,
             safetyLevel: .caution,
-            description: "Shared data between related apps (Office, Adobe, etc.). Orphaned data is safe to remove."
+            summary: "Shared data between related apps (Office, Adobe, etc.). Orphaned data is safe to remove."
         ),
 
         // Spotlight index
@@ -167,7 +167,7 @@ struct SystemDataPaths {
             path: "/.Spotlight-V100",
             requiresElevatedPermissions: true,
             safetyLevel: .safe,
-            description: "Spotlight search index. Deleting forces a rebuild; no data loss."
+            summary: "Spotlight search index. Deleting forces a rebuild; no data loss."
         ),
 
         // Xcode iOS DeviceSupport (debug symbols)
@@ -175,7 +175,7 @@ struct SystemDataPaths {
             path: "~/Library/Developer/Xcode/iOS DeviceSupport",
             requiresElevatedPermissions: false,
             safetyLevel: .safe,
-            description: "Debug symbols for connected iOS devices. Xcode re-downloads when needed."
+            summary: "Debug symbols for connected iOS devices. Xcode re-downloads when needed."
         ),
 
         // Xcode Archives
@@ -183,7 +183,7 @@ struct SystemDataPaths {
             path: "~/Library/Developer/Xcode/Archives",
             requiresElevatedPermissions: false,
             safetyLevel: .caution,
-            description: "App build archives. Only delete if you don't need to re-submit old builds."
+            summary: "App build archives. Only delete if you don't need to re-submit old builds."
         ),
 
         // Homebrew (Apple Silicon)
@@ -191,7 +191,7 @@ struct SystemDataPaths {
             path: "/opt/homebrew",
             requiresElevatedPermissions: false,
             safetyLevel: .caution,
-            description: "Homebrew packages and caches. Run 'brew cleanup' to remove old versions safely."
+            summary: "Homebrew packages and caches. Run 'brew cleanup' to remove old versions safely."
         ),
 
         // System databases
@@ -199,7 +199,7 @@ struct SystemDataPaths {
             path: "/private/var/db",
             requiresElevatedPermissions: true,
             safetyLevel: .unsafe,
-            description: "System databases (Spotlight, APFS metadata, dyld cache). Do not delete."
+            summary: "System databases (Spotlight, APFS metadata, dyld cache). Do not delete."
         ),
 
         // Package manager caches
@@ -207,19 +207,19 @@ struct SystemDataPaths {
             path: "~/.npm",
             requiresElevatedPermissions: false,
             safetyLevel: .safe,
-            description: "npm package cache. Re-downloaded on next install."
+            summary: "npm package cache. Re-downloaded on next install."
         ),
         SystemDataLocation(
             path: "~/.gradle",
             requiresElevatedPermissions: false,
             safetyLevel: .safe,
-            description: "Gradle build cache. Re-downloaded on next build."
+            summary: "Gradle build cache. Re-downloaded on next build."
         ),
         SystemDataLocation(
             path: "~/Library/Caches/CocoaPods",
             requiresElevatedPermissions: false,
             safetyLevel: .safe,
-            description: "CocoaPods spec and download cache. Re-downloaded on next pod install."
+            summary: "CocoaPods spec and download cache. Re-downloaded on next pod install."
         ),
 
         // Docker Desktop data
@@ -227,7 +227,7 @@ struct SystemDataPaths {
             path: "~/Library/Containers/com.docker.docker",
             requiresElevatedPermissions: false,
             safetyLevel: .caution,
-            description: "Docker Desktop disk image and data. Deleting destroys all containers and images."
+            summary: "Docker Desktop disk image and data. Deleting destroys all containers and images."
         ),
 
         // Saved Application State
@@ -235,7 +235,7 @@ struct SystemDataPaths {
             path: "~/Library/Saved Application State",
             requiresElevatedPermissions: false,
             safetyLevel: .safe,
-            description: "Window positions and state saved by apps. Recreated on next launch."
+            summary: "Window positions and state saved by apps. Recreated on next launch."
         ),
 
         // WebKit and browser data
@@ -243,7 +243,7 @@ struct SystemDataPaths {
             path: "~/Library/WebKit",
             requiresElevatedPermissions: false,
             safetyLevel: .caution,
-            description: "WebKit browsing data and local storage. Deleting clears web app data."
+            summary: "WebKit browsing data and local storage. Deleting clears web app data."
         ),
 
         // Preferences
@@ -251,7 +251,7 @@ struct SystemDataPaths {
             path: "~/Library/Preferences",
             requiresElevatedPermissions: false,
             safetyLevel: .caution,
-            description: "App preference files (.plist). Deleting resets apps to defaults."
+            summary: "App preference files (.plist). Deleting resets apps to defaults."
         ),
     ]
 

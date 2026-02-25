@@ -412,7 +412,7 @@ struct FileSystemItemView: View {
             .contextMenu {
                 Button {
                     if item.isDirectory {
-                        NSWorkspace.shared.open(URL(fileURLWithPath: item.path))
+                        NSWorkspace.shared.selectFile(nil, inFileViewerRootedAtPath: item.path)
                     } else {
                         NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: item.path)])
                     }
@@ -447,13 +447,15 @@ struct FileSystemItemView: View {
 
 // MARK: - Row Background Helper
 
-func rowBackground(index: Int, isHovered: Bool) -> Color {
-    if isHovered {
-        return Color.white.opacity(0.06)
-    } else if index % 2 == 1 {
-        return Color(NSColor.separatorColor).opacity(0.08)
-    } else {
-        return Color.clear
+extension View {
+    func rowBackground(index: Int, isHovered: Bool) -> Color {
+        if isHovered {
+            return Color.white.opacity(0.06)
+        } else if index % 2 == 1 {
+            return Color(NSColor.separatorColor).opacity(0.08)
+        } else {
+            return Color.clear
+        }
     }
 }
 

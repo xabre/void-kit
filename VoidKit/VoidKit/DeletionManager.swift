@@ -1,26 +1,28 @@
 import Foundation
 import AppKit
 
+enum DeletionSource {
+    case container
+    case systemData
+}
+
 struct DeletionItem: Identifiable {
     let id: UUID
     let name: String
     let path: String
     let bundleID: String
     let size: Int64
+    let source: DeletionSource
 
     var formattedSize: String {
         ByteCountFormatter.string(fromByteCount: size, countStyle: .file)
-    }
-
-    /// Whether this item came from the System Data tab (vs App Containers)
-    var isSystemData: Bool {
-        bundleID.isEmpty
     }
 }
 
 class DeletionManager: ObservableObject {
     @Published var selectedItems: [UUID: DeletionItem] = [:]
     @Published var isDeleting: Bool = false
+    @Published var lastError: String?
 
     var itemCount: Int { selectedItems.count }
 
@@ -45,7 +47,8 @@ class DeletionManager: ObservableObject {
                 name: container.appName ?? container.bundleID,
                 path: container.path,
                 bundleID: container.bundleID,
-                size: size
+                size: size,
+                source: .container
             )
             selectedItems[container.id] = item
         }
@@ -60,7 +63,8 @@ class DeletionManager: ObservableObject {
                 name: fsItem.name,
                 path: fsItem.path,
                 bundleID: "",
-                size: fsItem.size
+                size: fsItem.size,
+                source: .systemData
             )
             selectedItems[fsItem.id] = item
         }
@@ -75,15 +79,21 @@ class DeletionManager: ObservableObject {
     }
 
     func deleteSelected() async -> Set<UUID> {
-        await MainActor.run { isDeleting = true }
+        let itemsToDelete = await MainActor.run {
+            isDeleting = true
+            return Array(selectedItems)
+        }
 
         var deletedIDs: Set<UUID> = []
+        var failedNames: [String] = []
 
-        for (id, item) in selectedItems {
+        for (id, item) in itemsToDelete {
             let url = URL(fileURLWithPath: item.path)
             let success = await recycleFile(url)
             if success {
                 deletedIDs.insert(id)
+            } else {
+                failedNames.append(item.name)
             }
         }
 
@@ -92,6 +102,9 @@ class DeletionManager: ObservableObject {
                 selectedItems.removeValue(forKey: id)
             }
             isDeleting = false
+            if !failedNames.isEmpty {
+                lastError = "Failed to move to Trash: \(failedNames.joined(separator: ", "))"
+            }
         }
 
         return deletedIDs
