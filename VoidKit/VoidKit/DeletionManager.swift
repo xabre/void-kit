@@ -97,13 +97,16 @@ class DeletionManager: ObservableObject {
             }
         }
 
+        let ids = deletedIDs
+        let names = failedNames
+
         await MainActor.run {
-            for id in deletedIDs {
+            for id in ids {
                 selectedItems.removeValue(forKey: id)
             }
             isDeleting = false
-            if !failedNames.isEmpty {
-                lastError = "Failed to move to Trash: \(failedNames.joined(separator: ", "))"
+            if !names.isEmpty {
+                lastError = "Failed to move to Trash: \(names.joined(separator: ", "))"
             }
         }
 
