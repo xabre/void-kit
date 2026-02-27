@@ -65,18 +65,6 @@ VoidKit is a macOS application designed to help you understand what's taking up 
 5. Use the filter options to show only orphaned containers
 6. Size information is displayed for each item
 
-## App Name Alternatives
-
-During development, we considered several names:
-- **VoidKit** (current) - Clean and minimal
-- SpaceReclaim
-- SystemSweep
-- MacCleanse
-- SpaceFinder
-- DiskVoid
-- ClearSpace
-- StorageScout
-
 ## Project Structure
 
 ```
