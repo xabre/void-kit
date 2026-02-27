@@ -15,20 +15,30 @@ enum FileUtilities {
     private static let tccProtectedPaths: Set<String> = {
         let home = FileManager.default.homeDirectoryForCurrentUser.path
         return [
+            // Media & Music – triggers "would like to access your Music" prompt
             "\(home)/Library/Application Support/com.apple.MediaLibrary",
             "\(home)/Library/Application Support/com.apple.avfoundation",
+            "\(home)/Library/Application Support/com.apple.AMPLibraryAgent",
+            "\(home)/Library/Application Support/com.apple.AMPArtworkAgent",
+            "\(home)/Library/Application Support/com.apple.iTunesCloud",
+            "\(home)/Library/Application Support/com.apple.Music",
+            "\(home)/Music",
+            // Contacts & Calendar
             "\(home)/Library/Application Support/AddressBook",
             "\(home)/Library/Calendars",
             "\(home)/Library/Contacts",
+            // Home, Identity, Photos
             "\(home)/Library/HomeKit",
             "\(home)/Library/IdentityServices",
             "\(home)/Library/Photos",
+            "\(home)/Pictures/Photos Library.photoslibrary",
+            // Reminders, Sharing, Suggestions
             "\(home)/Library/Reminders",
             "\(home)/Library/Sharing",
             "\(home)/Library/Suggestions",
-            "\(home)/Pictures/Photos Library.photoslibrary",
-            "\(home)/Music/Music",
-            "\(home)/Music/Music Library.musiclibrary",
+            // Group containers for Apple media apps
+            "\(home)/Library/Group Containers/group.com.apple.music",
+            "\(home)/Library/Group Containers/group.com.apple.podcasts",
         ]
     }()
 
