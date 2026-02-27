@@ -111,40 +111,33 @@ jobs:
         run: |
           APP_PATH="build/Build/Products/Release/$APP_NAME.app"
           SPARKLE_FW="$APP_PATH/Contents/Frameworks/Sparkle.framework"
+          SIGN="codesign --force --sign Developer ID Application --keychain $KEYCHAIN_PATH --timestamp --options runtime"
 
-          # Sign all XPC services, helper tools, and framework binaries
-          # Order matters: sign innermost binaries first, then the framework itself
-          find "$SPARKLE_FW" -name "*.xpc" -type d | while read xpc; do
-            codesign --force --deep --sign "Developer ID Application" \
-              --keychain "$KEYCHAIN_PATH" \
-              --timestamp \
-              --options runtime \
-              "$xpc"
+          # Sign every Mach-O binary inside the Sparkle framework (innermost first).
+          # find all executable files (bundles and standalone binaries) and sign them
+          # deepest paths first so outer signatures wrap already-signed contents.
+          find "$SPARKLE_FW" -type f -perm +111 | awk '{print length, $0}' | sort -rn | cut -d' ' -f2- | while read bin; do
+            # Only sign Mach-O files, skip scripts/plists
+            if file "$bin" | grep -q "Mach-O"; then
+              echo "Signing: $bin"
+              $SIGN "$bin"
+            fi
           done
 
-          # Sign the Autoupdate helper if present
-          if [ -d "$SPARKLE_FW/Versions/B/Autoupdate.app" ]; then
-            codesign --force --deep --sign "Developer ID Application" \
-              --keychain "$KEYCHAIN_PATH" \
-              --timestamp \
-              --options runtime \
-              "$SPARKLE_FW/Versions/B/Autoupdate.app"
-          fi
+          # Sign all .app and .xpc bundles (deepest first)
+          find "$SPARKLE_FW" \( -name "*.app" -o -name "*.xpc" \) -type d | awk '{print length, $0}' | sort -rn | cut -d' ' -f2- | while read bundle; do
+            echo "Signing bundle: $bundle"
+            $SIGN "$bundle"
+          done
 
           # Sign the framework itself
-          codesign --force --sign "Developer ID Application" \
-            --keychain "$KEYCHAIN_PATH" \
-            --timestamp \
-            --options runtime \
-            "$SPARKLE_FW"
+          echo "Signing framework: $SPARKLE_FW"
+          $SIGN "$SPARKLE_FW"
 
           # Re-sign the main app (since framework signatures changed)
-          codesign --force --sign "Developer ID Application" \
-            --keychain "$KEYCHAIN_PATH" \
-            --timestamp \
-            --options runtime \
-            --entitlements "$(find build -name '*.xcent' -path '*VoidKit*' | head -1)" \
-            "$APP_PATH"
+          ENTITLEMENTS=$(find build -name '*.xcent' -path '*VoidKit*' | head -1)
+          echo "Re-signing app with entitlements: $ENTITLEMENTS"
+          $SIGN --entitlements "$ENTITLEMENTS" "$APP_PATH"
 
       - name: Verify code signature
         run: |
