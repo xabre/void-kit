@@ -17,6 +17,9 @@ on:
         default: ''
         type: string
 
+permissions:
+  contents: write
+
 env:
   SCHEME: VoidKit
   PROJECT: VoidKit/VoidKit.xcodeproj
@@ -223,7 +226,7 @@ jobs:
         run: |
           VERSION="${{ steps.version.outputs.VERSION }}"
           TAG="${GITHUB_REF_NAME:-v${VERSION}}"
-          DOWNLOAD_URL="https://github.com/secelead/void-kit/releases/download/${TAG}/VoidKit.dmg"
+          DOWNLOAD_URL="https://github.com/xabre/void-kit/releases/download/${TAG}/VoidKit.dmg"
           PUB_DATE=$(date -u +"%a, %d %b %Y %H:%M:%S %z")
 
           # Extract edDSASignature and length from SPARKLE_SIGNATURE
