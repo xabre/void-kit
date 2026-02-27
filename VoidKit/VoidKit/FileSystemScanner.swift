@@ -114,6 +114,11 @@ class FileSystemScanner: ObservableObject {
                         continue
                     }
 
+                    // Skip TCC-protected directories to avoid permission prompts
+                    if isDir.boolValue && FileUtilities.isTCCProtected(fullPath) {
+                        continue
+                    }
+
                     let childItem = FileSystemItem(
                         name: name,
                         path: fullPath,

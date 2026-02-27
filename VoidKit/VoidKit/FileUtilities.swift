@@ -10,6 +10,33 @@ extension Bundle {
 }
 
 enum FileUtilities {
+    /// Subdirectories inside ~/Library that trigger TCC permission prompts
+    /// (Music, Photos, Contacts, etc.) and are irrelevant to storage cleanup.
+    private static let tccProtectedPaths: Set<String> = {
+        let home = FileManager.default.homeDirectoryForCurrentUser.path
+        return [
+            "\(home)/Library/Application Support/com.apple.MediaLibrary",
+            "\(home)/Library/Application Support/com.apple.avfoundation",
+            "\(home)/Library/Application Support/AddressBook",
+            "\(home)/Library/Calendars",
+            "\(home)/Library/Contacts",
+            "\(home)/Library/HomeKit",
+            "\(home)/Library/IdentityServices",
+            "\(home)/Library/Photos",
+            "\(home)/Library/Reminders",
+            "\(home)/Library/Sharing",
+            "\(home)/Library/Suggestions",
+            "\(home)/Pictures/Photos Library.photoslibrary",
+            "\(home)/Music/Music",
+            "\(home)/Music/Music Library.musiclibrary",
+        ]
+    }()
+
+    /// Check if a path is inside a TCC-protected directory.
+    static func isTCCProtected(_ path: String) -> Bool {
+        tccProtectedPaths.contains(where: { path.hasPrefix($0) })
+    }
+
     /// Calculate the total allocated size of all files in a directory tree.
     /// Uses `totalFileAllocatedSizeKey` for accurate disk usage matching Finder.
     static func calculateDirectorySize(atPath path: String) -> Int64 {
@@ -24,6 +51,12 @@ enum FileUtilities {
         }
 
         for case let fileURL as URL in enumerator {
+            // Skip TCC-protected directories to avoid unwanted permission prompts
+            if isTCCProtected(fileURL.path) {
+                enumerator.skipDescendants()
+                continue
+            }
+
             do {
                 let values = try fileURL.resourceValues(forKeys: [.totalFileAllocatedSizeKey, .isDirectoryKey])
                 if let isDirectory = values.isDirectory, !isDirectory,

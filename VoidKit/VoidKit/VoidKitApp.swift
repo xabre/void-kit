@@ -3,6 +3,7 @@ import SwiftUI
 @main
 struct VoidKitApp: App {
     @StateObject private var deletionManager = DeletionManager()
+    @StateObject private var updaterManager = UpdaterManager()
 
     var body: some Scene {
         WindowGroup {
@@ -15,6 +16,9 @@ struct VoidKitApp: App {
             CommandGroup(replacing: .appInfo) {
                 AboutMenuButton()
             }
+            CommandGroup(after: .appInfo) {
+                CheckForUpdatesButton(updaterManager: updaterManager)
+            }
         }
 
         Window("About Void Kit", id: "about") {
@@ -23,6 +27,10 @@ struct VoidKitApp: App {
         .windowStyle(.hiddenTitleBar)
         .windowResizability(.contentSize)
         .defaultPosition(.center)
+
+        Settings {
+            SettingsView(updaterManager: updaterManager)
+        }
     }
 }
 
@@ -33,5 +41,16 @@ private struct AboutMenuButton: View {
         Button("About Void Kit") {
             openWindow(id: "about")
         }
+    }
+}
+
+private struct CheckForUpdatesButton: View {
+    @ObservedObject var updaterManager: UpdaterManager
+
+    var body: some View {
+        Button("Check for Updates…") {
+            updaterManager.checkForUpdates()
+        }
+        .disabled(!updaterManager.updater.canCheckForUpdates)
     }
 }
