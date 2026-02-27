@@ -107,6 +107,45 @@ jobs:
             $VERSION_ARGS \
             build
 
+      - name: Re-sign Sparkle framework for notarization
+        run: |
+          APP_PATH="build/Build/Products/Release/$APP_NAME.app"
+          SPARKLE_FW="$APP_PATH/Contents/Frameworks/Sparkle.framework"
+
+          # Sign all XPC services, helper tools, and framework binaries
+          # Order matters: sign innermost binaries first, then the framework itself
+          find "$SPARKLE_FW" -name "*.xpc" -type d | while read xpc; do
+            codesign --force --deep --sign "Developer ID Application" \
+              --keychain "$KEYCHAIN_PATH" \
+              --timestamp \
+              --options runtime \
+              "$xpc"
+          done
+
+          # Sign the Autoupdate helper if present
+          if [ -d "$SPARKLE_FW/Versions/B/Autoupdate.app" ]; then
+            codesign --force --deep --sign "Developer ID Application" \
+              --keychain "$KEYCHAIN_PATH" \
+              --timestamp \
+              --options runtime \
+              "$SPARKLE_FW/Versions/B/Autoupdate.app"
+          fi
+
+          # Sign the framework itself
+          codesign --force --sign "Developer ID Application" \
+            --keychain "$KEYCHAIN_PATH" \
+            --timestamp \
+            --options runtime \
+            "$SPARKLE_FW"
+
+          # Re-sign the main app (since framework signatures changed)
+          codesign --force --sign "Developer ID Application" \
+            --keychain "$KEYCHAIN_PATH" \
+            --timestamp \
+            --options runtime \
+            --entitlements "$(find build -name '*.xcent' -path '*VoidKit*' | head -1)" \
+            "$APP_PATH"
+
       - name: Verify code signature
         run: |
           APP_PATH="build/Build/Products/Release/$APP_NAME.app"
