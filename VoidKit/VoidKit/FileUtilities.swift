@@ -1,4 +1,5 @@
 import Foundation
+import CryptoKit
 
 extension Bundle {
     /// Resolved display name: CFBundleDisplayName → CFBundleName → filename.
@@ -44,7 +45,27 @@ enum FileUtilities {
 
     /// Check if a path is inside a TCC-protected directory.
     static func isTCCProtected(_ path: String) -> Bool {
-        tccProtectedPaths.contains(where: { path.hasPrefix($0) })
+        tccProtectedPaths.contains(where: { isPath(path, inside: $0) })
+    }
+
+    /// True if `path` equals `directory` or is nested inside it.
+    /// Plain `hasPrefix` would also match siblings like "~/MusicApps" for "~/Music".
+    static func isPath(_ path: String, inside directory: String) -> Bool {
+        path == directory || path.hasPrefix(directory + "/")
+    }
+
+    /// Create a deterministic UUID from a path so the same item
+    /// produces the same ID across re-scans and across tabs.
+    static func stableID(forPath path: String) -> UUID {
+        let hash = SHA256.hash(data: Data(path.utf8))
+        let bytes = Array(hash)
+        // Build a UUID from the first 16 bytes of the SHA-256 digest
+        return UUID(uuid: (
+            bytes[0], bytes[1], bytes[2], bytes[3],
+            bytes[4], bytes[5], bytes[6], bytes[7],
+            bytes[8], bytes[9], bytes[10], bytes[11],
+            bytes[12], bytes[13], bytes[14], bytes[15]
+        ))
     }
 
     /// Calculate the total allocated size of all files in a directory tree.

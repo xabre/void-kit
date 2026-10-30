@@ -273,7 +273,7 @@ struct ContainerItemView: View {
 
             // Status indicator
             Circle()
-                .fill(container.isOrphaned ? Color.orange : Color.green)
+                .fill(container.isOrphaned ? Color.orange : (container.appPath == nil ? Color.gray : Color.green))
                 .frame(width: 8, height: 8)
                 .padding(.leading, onToggleSelection == nil ? 12 : 0)
 
@@ -300,10 +300,14 @@ struct ContainerItemView: View {
                         .font(.system(size: 11, design: .monospaced))
                         .foregroundColor(.secondary)
                         .lineLimit(1)
-                } else {
+                } else if container.isOrphaned {
                     Text("App not installed")
                         .font(.system(size: 11))
                         .foregroundColor(.orange)
+                } else {
+                    Text("Owner unknown — grant Full Disk Access to identify")
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary)
                 }
             }
 

@@ -123,14 +123,6 @@ struct SystemDataPaths {
             summary: "Per-user temp/cache dirs. Active apps could be disrupted."
         ),
 
-        // Time Machine local snapshots
-        SystemDataLocation(
-            path: "/.MobileBackups.trash",
-            requiresElevatedPermissions: true,
-            safetyLevel: .safe,
-            summary: "Deleted Time Machine snapshots. Safe to remove."
-        ),
-
         SystemDataLocation(
             path: "~/.local/share",
             requiresElevatedPermissions: false,
@@ -162,12 +154,12 @@ struct SystemDataPaths {
             summary: "Shared data between related apps (Office, Adobe, etc.). Orphaned data is safe to remove."
         ),
 
-        // Spotlight index
+        // Spotlight index (lives on the Data volume since macOS Catalina)
         SystemDataLocation(
-            path: "/.Spotlight-V100",
+            path: "/System/Volumes/Data/.Spotlight-V100",
             requiresElevatedPermissions: true,
-            safetyLevel: .safe,
-            summary: "Spotlight search index. Deleting forces a rebuild; no data loss."
+            safetyLevel: .unsafe,
+            summary: "Spotlight search index. To rebuild it, use 'sudo mdutil -E /' instead of deleting."
         ),
 
         // Xcode iOS DeviceSupport (debug symbols)

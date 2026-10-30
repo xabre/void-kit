@@ -51,6 +51,6 @@ private struct CheckForUpdatesButton: View {
         Button("Check for Updates…") {
             updaterManager.checkForUpdates()
         }
-        .disabled(!updaterManager.updater.canCheckForUpdates)
+        .disabled(!updaterManager.canCheckForUpdates)
     }
 }

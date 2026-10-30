@@ -1,7 +1,7 @@
 import Foundation
 
 class FileSystemItem: Identifiable, ObservableObject {
-    let id = UUID()
+    let id: UUID
     let name: String
     let path: String
     let isDirectory: Bool
@@ -11,15 +11,22 @@ class FileSystemItem: Identifiable, ObservableObject {
     @Published var isExpanded: Bool = false
     @Published var isCalculating: Bool = false
     @Published var isAccessDenied: Bool = false
+    /// Set on root items and inherited by their descendants.
     var safetyLevel: SafetyLevel?
     var safetyDescription: String?
     var displayPath: String?
 
     init(name: String, path: String, isDirectory: Bool, requiresElevatedPermissions: Bool = false) {
+        self.id = FileUtilities.stableID(forPath: path)
         self.name = name
         self.path = path
         self.isDirectory = isDirectory
         self.requiresElevatedPermissions = requiresElevatedPermissions
+    }
+
+    /// Items under a "Do Not Delete" location can't be queued for deletion.
+    var isDeletable: Bool {
+        !isAccessDenied && safetyLevel != .unsafe
     }
 
     var formattedSize: String {
@@ -82,7 +89,7 @@ class FileSystemScanner: ObservableObject {
             for item in items where !item.isAccessDenied {
                 group.enter()
                 self.calculateSize(for: item, completion: { [weak self] in
-                    self?.totalSize = self?.rootItems.reduce(0) { $0 + $1.size } ?? 0
+                    self?.updateTotalSize()
                     group.leave()
                 })
             }
@@ -124,6 +131,7 @@ class FileSystemScanner: ObservableObject {
                         path: fullPath,
                         isDirectory: isDir.boolValue
                     )
+                    childItem.safetyLevel = item.safetyLevel
 
                     if !self.fileManager.isReadableFile(atPath: fullPath) {
                         childItem.isAccessDenied = true
@@ -152,6 +160,17 @@ class FileSystemScanner: ObservableObject {
                 item.isCalculating = false
             }
         }
+    }
+
+    /// Sum root sizes, skipping roots nested inside another root
+    /// (e.g. ~/Library/Caches/CocoaPods inside ~/Library/Caches) so they aren't counted twice.
+    private func updateTotalSize() {
+        let paths = rootItems.map(\.path)
+        totalSize = rootItems
+            .filter { item in
+                !paths.contains { $0 != item.path && FileUtilities.isPath(item.path, inside: $0) }
+            }
+            .reduce(0) { $0 + $1.size }
     }
 
     private func calculateSize(for item: FileSystemItem, completion: (() -> Void)? = nil) {

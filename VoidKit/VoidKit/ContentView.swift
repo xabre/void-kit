@@ -296,13 +296,15 @@ struct FileSystemItemView: View {
                 Color.clear.frame(width: indentation)
 
                 // Checkbox
-                if !item.isAccessDenied {
+                if item.isDeletable {
                     Button(action: { deletionManager.toggleFileSystemItem(item) }) {
                         Image(systemName: deletionManager.isSelected(item.id) ? "checkmark.circle.fill" : "circle")
                             .font(.system(size: 14))
                             .foregroundColor(deletionManager.isSelected(item.id) ? .red : .secondary)
                     }
                     .buttonStyle(.plain)
+                } else if !item.isAccessDenied {
+                    Color.clear.frame(width: 14)
                 }
 
                 // Safety dot for root items

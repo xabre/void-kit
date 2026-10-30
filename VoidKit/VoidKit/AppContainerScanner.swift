@@ -1,6 +1,5 @@
 import Foundation
 import AppKit
-import CryptoKit
 
 struct ContainerInfo: Identifiable, Hashable {
     let id: UUID
@@ -18,20 +17,6 @@ struct ContainerInfo: Identifiable, Hashable {
 
     static func == (lhs: ContainerInfo, rhs: ContainerInfo) -> Bool {
         lhs.id == rhs.id
-    }
-
-    /// Create a deterministic UUID from a path so the same container
-    /// produces the same ID across re-scans.
-    static func stableID(forPath path: String) -> UUID {
-        let hash = SHA256.hash(data: Data(path.utf8))
-        let bytes = Array(hash)
-        // Build a UUID from the first 16 bytes of the SHA-256 digest
-        return UUID(uuid: (
-            bytes[0], bytes[1], bytes[2], bytes[3],
-            bytes[4], bytes[5], bytes[6], bytes[7],
-            bytes[8], bytes[9], bytes[10], bytes[11],
-            bytes[12], bytes[13], bytes[14], bytes[15]
-        ))
     }
 }
 
@@ -90,11 +75,17 @@ class AppContainerScanner: ObservableObject {
                         continue
                     }
 
-                    // Extract bundle ID from container name
-                    let bundleID = name
+                    // Most containers are named after their bundle ID, but some use a UUID;
+                    // containermanagerd records the real identifier in a metadata plist.
+                    let identifier = self.containerIdentifier(atPath: fullPath)
+                    let bundleID = identifier ?? name
 
                     // Resolve the matching application
                     let resolved = self.resolveApplication(bundleID: bundleID)
+
+                    // A UUID-named container whose metadata we can't read has an unknown
+                    // owner, so it must never be flagged as orphaned.
+                    let isUnidentified = identifier == nil && UUID(uuidString: name) != nil
 
                     // Get last-used date from container directory modification date
                     let containerURL = URL(fileURLWithPath: fullPath)
@@ -103,11 +94,11 @@ class AppContainerScanner: ObservableObject {
                     ).contentModificationDate
 
                     let container = ContainerInfo(
-                        id: ContainerInfo.stableID(forPath: fullPath),
+                        id: FileUtilities.stableID(forPath: fullPath),
                         name: name,
                         path: fullPath,
                         bundleID: bundleID,
-                        isOrphaned: resolved == nil,
+                        isOrphaned: resolved == nil && !isUnidentified,
                         appName: resolved?.name,
                         appPath: resolved?.path,
                         lastUsedDate: lastUsedDate
@@ -147,6 +138,18 @@ class AppContainerScanner: ObservableObject {
                 self.isScanning = false
             }
         }
+    }
+
+    /// Read the owning bundle ID from the container's metadata plist.
+    /// The plist is TCC-protected, so this returns nil without Full Disk Access.
+    private func containerIdentifier(atPath path: String) -> String? {
+        let metadataURL = URL(fileURLWithPath: path)
+            .appendingPathComponent(".com.apple.containermanagerd.metadata.plist")
+        guard let data = try? Data(contentsOf: metadataURL),
+              let plist = try? PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any] else {
+            return nil
+        }
+        return plist["MCMMetadataIdentifier"] as? String
     }
 
     private func scanInstalledApplications() {
