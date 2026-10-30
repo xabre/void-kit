@@ -35,7 +35,7 @@ VoidKit is a macOS application designed to help you understand what's taking up 
 ## Requirements
 
 - macOS 13.0 or later
-- Xcode 15.0 or later (for building)
+- Xcode 26 or later (for building)
 
 ## Building the Project
 
@@ -77,7 +77,13 @@ VoidKit/
     ├── FileSystemScanner.swift  # File system scanning logic
     ├── AppContainerScanner.swift  # Container scanning and orphan detection
     ├── SystemDataPaths.swift    # Known system data locations
+    ├── ReviewDeleteView.swift   # Review & Delete tab
+    ├── DeletionManager.swift    # Deletion queue; moves items to the Trash
+    ├── FileUtilities.swift      # Size calculation, TCC path filtering
     ├── PermissionsManager.swift # Full Disk Access management
+    ├── UpdaterManager.swift     # Sparkle auto-updates
+    ├── SettingsView.swift       # Settings window
+    ├── AboutView.swift          # About window
     ├── Assets.xcassets/         # App icons and assets
     └── VoidKit.entitlements     # App permissions
 ```
@@ -89,7 +95,9 @@ The app is built using:
 - **Foundation** for file system operations
 - **Combine** for reactive updates
 
-The app uses sandboxing and requests read-only file access permissions as needed.
+The app is not sandboxed, since it needs direct access to system directories. Grant it Full Disk Access in System Settings → Privacy & Security to see every location. Deletion moves items to the Trash, never deleting them permanently, and locations marked "Do Not Delete" can't be selected.
+
+Updates are delivered with [Sparkle](https://sparkle-project.org). Pushing a `v*` tag runs `.github/workflows/build-and-release.yml`, which builds, signs, notarizes, publishes the DMG, and updates `appcast.xml`.
 
 ## Contributing
 

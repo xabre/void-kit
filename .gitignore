@@ -63,3 +63,7 @@ fastlane/test_output
 
 # Local build output
 build/
+
+# IDE / local tool settings
+.idea/
+.claude/settings.local.json
