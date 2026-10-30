@@ -28,15 +28,15 @@ env:
 jobs:
   build:
     name: Build, Sign, Notarize & Package
-    runs-on: macos-14
+    runs-on: macos-26
     timeout-minutes: 30
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
-      - name: Select Xcode
-        run: sudo xcode-select -s /Applications/Xcode_15.4.app/Contents/Developer
+      - name: Show Xcode version
+        run: xcodebuild -version
 
       - name: Install Developer ID certificate
         env:
@@ -72,9 +72,12 @@ jobs:
 
       - name: Determine version
         id: version
+        env:
+          VERSION_OVERRIDE: ${{ inputs.version }}
+          CREATE_RELEASE: ${{ inputs.create_release }}
         run: |
-          if [ -n "${{ inputs.version }}" ]; then
-            VERSION="${{ inputs.version }}"
+          if [ -n "$VERSION_OVERRIDE" ]; then
+            VERSION="$VERSION_OVERRIDE"
             echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
             echo "Using manual version override: $VERSION"
           elif [[ "$GITHUB_REF" == refs/tags/v* ]]; then
@@ -83,6 +86,21 @@ jobs:
             echo "Detected version from tag: $VERSION"
           else
             echo "No version set, using project default"
+          fi
+
+          # A release needs a tag: the pushed tag, or v<version> for manual runs.
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            echo "TAG=$GITHUB_REF_NAME" >> $GITHUB_OUTPUT
+            echo "RELEASE=true" >> $GITHUB_OUTPUT
+          elif [ "$CREATE_RELEASE" = "true" ]; then
+            if [ -z "$VERSION" ]; then
+              echo "::error::create_release requires a version (e.g. 1.0.1)"
+              exit 1
+            fi
+            echo "TAG=v$VERSION" >> $GITHUB_OUTPUT
+            echo "RELEASE=true" >> $GITHUB_OUTPUT
+          else
+            echo "RELEASE=false" >> $GITHUB_OUTPUT
           fi
 
       - name: Build for Release
@@ -214,25 +232,26 @@ jobs:
           echo "DMG passes Gatekeeper."
 
       - name: Upload DMG artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ env.APP_NAME }}-dmg
           path: ${{ env.DMG_PATH }}
           retention-days: 30
 
       - name: Create GitHub Release
-        if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.create_release == 'true')
+        if: steps.version.outputs.RELEASE == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          TAG="${GITHUB_REF_NAME:-manual-$(date +%Y%m%d-%H%M%S)}"
+          TAG="${{ steps.version.outputs.TAG }}"
           gh release create "$TAG" \
             "$DMG_PATH" \
+            --target "$GITHUB_SHA" \
             --title "$APP_NAME $TAG" \
             --generate-notes
 
       - name: Sign DMG with Sparkle EdDSA key
-        if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.create_release == 'true')
+        if: steps.version.outputs.RELEASE == 'true'
         env:
           SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
         run: |
@@ -259,12 +278,17 @@ jobs:
           echo "DMG_SIZE=$DMG_SIZE" >> $GITHUB_ENV
 
       - name: Update appcast.xml
-        if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.create_release == 'true')
+        if: steps.version.outputs.RELEASE == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # Tag builds check out a detached tag commit; switch to the latest
+          # main so the appcast commit can be pushed even if main moved on.
+          git fetch origin main
+          git checkout -B main origin/main
+
           VERSION="${{ steps.version.outputs.VERSION }}"
-          TAG="${GITHUB_REF_NAME:-v${VERSION}}"
+          TAG="${{ steps.version.outputs.TAG }}"
           DOWNLOAD_URL="https://github.com/xabre/void-kit/releases/download/${TAG}/VoidKit.dmg"
           PUB_DATE=$(date -u +"%a, %d %b %Y %H:%M:%S %z")
 
@@ -285,15 +309,15 @@ jobs:
           "
 
       - name: Commit and push updated appcast.xml
-        if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.create_release == 'true')
+        if: steps.version.outputs.RELEASE == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add appcast.xml
-          git commit -m "Update appcast.xml for ${GITHUB_REF_NAME}" || echo "No changes to commit"
-          git push origin HEAD:main
+          git commit -m "Update appcast.xml for ${{ steps.version.outputs.TAG }}" || echo "No changes to commit"
+          git push origin main
 
       - name: Cleanup keychain
         if: always()
